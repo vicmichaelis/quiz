@@ -487,7 +487,7 @@ button{font-family:var(--font);}
       <span class="bday-sep">/</span>
       <input type="number" id="q1-day" min="1" max="31" value="1">
     </div>
-    <p class="bday-hint">Month / Day, adjust the numbers above to your best guess</p>
+    <p class="bday-hint">Month / Day</p>
     <button class="btn-primary" id="q1-btn" onclick="submitQ1()">Next Question <i class="fas fa-arrow-right"></i></button>
   </div>
 
@@ -533,7 +533,7 @@ button{font-family:var(--font);}
           <div class="clue-item"><strong>1</strong> An impressive achievement</div>
           <div class="clue-item"><strong>2</strong> Joint between forearm and upper arm</div>
           <div class="clue-item"><strong>3</strong> Bring a memory or feeling to mind</div>
-          <div class="clue-item"><strong>4</strong> Embankment built to hold back flooding</div>
+          <div class="clue-item"><strong>4</strong> Elevated ridge or wall built to hold back flooding</div>
           <div class="clue-item"><strong>6</strong> To dispatch, like a letter</div>
         </div>
       </div>
@@ -646,7 +646,7 @@ button{font-family:var(--font);}
         <div class="petal-sub">12 songs</div>
       </div>
     </div>
-    <p class="subtitle" style="margin-top:14px;">Pre-save the album, name all 12 tracks to unlock it.</p>
+    <p class="subtitle" style="margin-top:14px;">Name all the tracks on 'petal' by Ariana Grande.</p>
     <div class="petal-progress-row">
       <div class="petal-progress-track"><div class="petal-progress-fill" id="petal-progress-fill"></div></div>
       <span id="petal-progress-label">0 / 12</span>
@@ -661,7 +661,7 @@ button{font-family:var(--font);}
 
   <div id="screen-12" class="screen">
     <h2>Next Question <button class="help-btn" onclick="showRunawayHelp()">?</button></h2>
-    <p class="subtitle">Simple enough. Press the button.</p>
+    <p class="subtitle">Press the button to move on to the next question.</p>
     <div class="runaway-zone" id="runaway-zone">
       <button class="runaway-btn" id="runaway-btn" onclick="handleRunawayClick()">Next Question</button>
     </div>
@@ -919,7 +919,7 @@ function buildAdminAnswers(){
     <div class="admin-answer"><strong>Q7 Country (current target):</strong> ${currentTarget}, randomized each playthrough</div>
     <div class="admin-answer"><strong>Q8 / Q9 Name people:</strong> Open-ended, verified live against Wikipedia/Wikidata (must be a real, distinct person of the requested gender with a Wikipedia article).</div>
     <div class="admin-answer"><strong>Q10 Prove You Support Pride:</strong> Open-ended, verified against Wikidata (must have a documented LGBTQ+ related sexual orientation or gender identity claim, 15 required).</div>
-    <div class="admin-answer"><strong>Q11 Pre-save Petal:</strong> All 12 tracks: kiss me, hate that i made you love me, petal, stay, oh well, big feelings, freak, (warning signs), like i do, never get over me, bad thing (bunny hop), nowhere, nobody.</div>
+    <div class="admin-answer"><strong>Q11 Pre-save Petal:</strong> All 12 tracks: kiss me, hate that i made you love me, petal, stay, oh well, big feelings, freak, warning signs (interlude), like i do, never get over me, bad thing (bunny hop), nowhere, nobody.</div>
     <div class="admin-answer"><strong>Q12 Next Question:</strong> The button only flees from mouse movement, it never reacts to keyboard focus. Press Tab until the button is focused, then hit Enter or Space to activate it.</div>
   `;
   document.getElementById('admin-answers-content').innerHTML = html + `<button class="modal-close" onclick="closeModal('admin-answers-modal')">Close</button>`;
@@ -944,9 +944,9 @@ function showMiniHelp(){
     <p>Fill every open square in the grid using the across and down clues.</p>
     <ul>
       <li>The dark shaded squares are blocked and are not part of any word.</li>
-      <li>Click a square and type to fill it in; arrow keys move between cells.</li>
+      <li>Click a square and type to fill it in. Arrow keys can be used to move between cells.</li>
       <li>The grid must be completely filled before you can submit.</li>
-      <li>You get one free "Check puzzle", it marks each filled letter green (correct) or red (incorrect), for one-time use only.</li>
+      <li>You get one free "Check puzzle", it marks each filled letter green (correct) or red (incorrect).</li>
     </ul>`);
 }
 function showBeeHelp(){
@@ -965,15 +965,15 @@ function showConnHelp(){
     <ul>
       <li>Select four tiles, then hit Submit.</li>
       <li>Find all 4 groups before you run out of mistakes.</li>
-      <li>Categories range from straightforward (yellow) to tricky (purple), watch out for red herrings!</li>
+      <li>Categories range from straightforward (yellow) to tricky (purple).</li>
     </ul>`);
 }
 function showRunawayHelp(){
-  showHelp(`<h3>How to Answer This Question</h3>
-    <p>Just press the button. Nothing tricky about it... unless you try to click it with a mouse.</p>
+  showHelp(`<h3>Hint</h3>
+    <p>This question is possible.</p>
     <ul>
-      <li>This element is fully keyboard accessible.</li>
-      <li>Not every control on a page needs a mouse to operate it.</li>
+      <li>There is more than one way to complete this.</li>
+      <li>One of the ways does not involve using your mouse at all.</li>
     </ul>`);
 }
 function showPeopleHelp(){
@@ -1664,7 +1664,7 @@ const PETAL_TRACKS = [
   "oh well",
   "big feelings",
   "freak",
-  "(warning signs)",
+  "warning signs (interlude)",
   "like i do",
   "never get over me",
   "bad thing (bunny hop)",
