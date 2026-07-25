@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Lemon's Quiz</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+<style>
+:root{
+  --bg:#fafafa; --surface:#ffffff; --text:#161616; --text-muted:#75757a;
+  --border:#e4e4e6; --accent:#2c5f5a; --accent-soft:#e6efee;
+  --danger:#c0463e; --shadow:0 8px 30px rgba(0,0,0,.06);
+  --w-correct:#5c8a52; --w-present:#c9a63e; --w-absent:#8a8a8d; --w-border:#d3d3d6;
+  --c-yellow:#e8d788; --c-green:#a9c98a; --c-blue:#a9c1e0; --c-purple:#c7a3d1; --c-selected:#3a3a3c;
+  --bee-fill:#e6e6e6; --bee-border:#d3d3d3; --bee-center:#f7da21; --bee-text:#1a1a1b;
+  --radius:10px; --radius-lg:16px;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --font: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+body.dark{
+  --bg:#111113; --surface:#1b1b1e; --text:#f0f0f1; --text-muted:#9a9aa1;
+  --border:#2c2c30; --accent:#5fa79c; --accent-soft:#20302e;
+  --w-correct:#4d7a45; --w-present:#a98c34; --w-absent:#57575b; --w-border:#3a3a3e;
+  --c-yellow:#5c542c; --c-green:#3f5a37; --c-blue:#33455e; --c-purple:#4a3a53; --c-selected:#e8e8ea;
+  --bee-fill:#3a3a3e; --bee-border:#4a4a4e; --bee-center:#f7da21; --bee-text:#f0f0f1;
+  --shadow:0 8px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{-webkit-tap-highlight-color:transparent;}
+body{
+  font-family:var(--font); background:var(--bg); color:var(--text);
+  display:flex; justify-content:center; align-items:center; min-height:100vh;
+  padding:40px 16px calc(40px + env(safe-area-inset-bottom)) 16px;
+  transition:background .3s ease, color .3s ease;
+  position:relative; overflow-x:hidden;
+}
+
+.bg-decor{position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none;}
+.bg-decor .blob{
+  position:absolute; border-radius:50%; filter:blur(70px);
+  opacity:.35; transition:opacity .3s ease;
+  animation:drift 22s ease-in-out infinite;
+}
+body.dark .bg-decor .blob{opacity:.16;}
+.bg-decor .blob-1{width:420px; height:420px; background:var(--accent); top:-140px; left:-120px;}
+.bg-decor .blob-2{width:360px; height:360px; background:var(--c-blue); bottom:-140px; right:-100px; animation-delay:-9s;}
+.bg-decor .dots{
+  position:absolute; inset:0;
+  background-image:radial-gradient(var(--border) 1px, transparent 1px);
+  background-size:26px 26px; opacity:.5;
+}
+@keyframes drift{
+  0%,100%{transform:translate(0,0) scale(1);}
+  50%{transform:translate(20px,-24px) scale(1.06);}
+}
+
+.app-container{
+  width:100%; max-width:600px; background:var(--surface); border-radius:var(--radius-lg);
+  box-shadow:var(--shadow); padding:40px; position:relative; border:1px solid var(--border);
+  transition:background .3s ease, border-color .3s ease;
+}
+.screen{display:none; flex-direction:column; animation:fadeUp .45s var(--ease) forwards;}
+.screen.active{display:flex;}
+@keyframes fadeUp{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+h1{font-size:1.9rem; font-weight:700; text-align:center; letter-spacing:-.02em;}
+h2{font-size:1.25rem; font-weight:700; margin-bottom:4px; letter-spacing:-.01em;}
+p.subtitle{color:var(--text-muted); margin-bottom:18px; font-size:.92rem; line-height:1.5; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.input-group{margin-bottom:16px; width:100%;}
+input[type=text], input[type=number], input[type=password]{
+  width:100%; padding:12px 14px; border:1.5px solid var(--border); border-radius:8px;
+  font-size:16px; outline:none; background:var(--bg); color:var(--text); font-family:var(--font);
+  transition:border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+input[type=text]:focus, input[type=number]:focus, input[type=password]:focus{
+  border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);
+}
+button{font-family:var(--font);}
+.btn-primary{
+  background:var(--text); color:var(--bg); border:none; padding:13px 20px; border-radius:8px;
+  font-size:.95rem; font-weight:600; cursor:pointer; width:100%; margin-top:6px;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  transition:opacity .2s var(--ease), transform .15s var(--ease), box-shadow .2s var(--ease);
+}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px); box-shadow:0 6px 16px rgba(0,0,0,.12);}
+.btn-primary:active:not(:disabled){transform:translateY(0) scale(.98);}
+.btn-primary:disabled{opacity:.35; cursor:not-allowed; transform:none; box-shadow:none;}
+.btn-secondary{
+  background:transparent; color:var(--text); border:1.5px solid var(--border); padding:10px 16px;
+  border-radius:8px; font-size:.85rem; font-weight:600; cursor:pointer; transition:.2s var(--ease);
+}
+.btn-secondary:hover:not(:disabled){border-color:var(--text-muted);}
+.btn-secondary:disabled{opacity:.4; cursor:default;}
+.help-btn{
+  width:20px; height:20px; border-radius:50%; border:1.5px solid var(--border); background:transparent;
+  color:var(--text-muted); font-size:.7rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
+  transition:.2s var(--ease);
+}
+.help-btn:hover{border-color:var(--accent); color:var(--accent);}
+
+.progress-hud{
+  position:fixed; top:calc(env(safe-area-inset-top,0px) + 16px); right:calc(env(safe-area-inset-right,0px) + 16px);
+  z-index:950; display:flex; flex-direction:column; align-items:flex-end; gap:4px;
+  font-family:var(--font); pointer-events:none;
+}
+.progress-hud.hidden{display:none;}
+.progress-pill{
+  background:var(--surface); border:1.5px solid var(--border); border-radius:20px; padding:6px 14px;
+  font-size:.78rem; font-weight:700; color:var(--text); box-shadow:var(--shadow);
+}
+.stopwatch-pill{
+  background:var(--surface); border:1.5px solid var(--border); border-radius:20px; padding:4px 12px;
+  font-size:.72rem; font-weight:600; color:var(--text-muted); box-shadow:var(--shadow);
+  display:flex; align-items:center; gap:5px;
+}
+.stopwatch-pill i{font-size:.68rem;}
+
+.bday-row{display:flex; align-items:center; gap:8px; justify-content:center; margin-bottom:6px;}
+.bday-row input{text-align:center; width:80px; font-size:1.1rem;}
+.bday-sep{font-size:1.3rem; color:var(--text-muted); font-weight:300;}
+.bday-hint{text-align:center; font-size:.78rem; color:var(--text-muted); margin-bottom:12px;}
+
+.mcq-grid{display:flex; flex-direction:column; gap:8px; margin-bottom:10px;}
+.mcq-option{
+  position:relative; padding:12px 16px; border:1.5px solid var(--border); border-radius:8px;
+  cursor:pointer; display:flex; align-items:center; gap:10px; font-weight:500; font-size:.9rem;
+  background:var(--bg); transition:border-color .2s var(--ease), background .2s var(--ease), transform .15s var(--ease);
+}
+.mcq-option:hover{border-color:var(--text-muted); transform:translateY(-1px);}
+.mcq-option input{display:none;}
+.mcq-option.selected{border-color:var(--accent); background:var(--accent-soft);}
+.mcq-option.selected::after{content:'\f00c'; font-family:'Font Awesome 6 Free'; font-weight:900; position:absolute; right:16px; color:var(--accent); font-size:.8rem;}
+
+.wordle-wrapper{display:flex; flex-direction:column; align-items:center; margin-bottom:10px;}
+.wordle-board{display:grid; grid-template-rows:repeat(6,1fr); gap:5px; margin-bottom:18px;}
+.wordle-row{display:grid; grid-template-columns:repeat(5,1fr); gap:5px;}
+.wordle-tile{
+  width:48px; height:48px; border:2px solid var(--w-border); display:flex; justify-content:center;
+  align-items:center; font-size:1.4rem; font-weight:700; text-transform:uppercase; background:var(--surface);
+  color:var(--text); box-sizing:border-box; perspective:400px;
+}
+.wordle-keyboard{width:100%; max-width:420px; display:flex; flex-direction:column; gap:6px; margin:0 auto;}
+.keyboard-row{display:flex; justify-content:center; gap:5px;}
+.key{
+  background:var(--w-border); color:var(--text); border:none; padding:12px 0; border-radius:5px;
+  font-weight:600; font-size:.8rem; cursor:pointer; flex:1; text-transform:uppercase;
+  transition:background .25s var(--ease), transform .1s var(--ease);
+}
+.key:active{transform:scale(.92);}
+.key-large{flex:1.5; font-size:.7rem;}
+.wordle-tile.filled{animation:pop-tile .28s var(--ease); border-color:var(--text-muted);}
+@keyframes pop-tile{
+  0%{transform:scale(.65) rotateX(90deg);}
+  55%{transform:scale(1.12) rotateX(-8deg);}
+  100%{transform:scale(1) rotateX(0deg);}
+}
+@keyframes shake{10%,90%{transform:translateX(-2px);}20%,80%{transform:translateX(3px);}30%,50%,70%{transform:translateX(-5px);}40%,60%{transform:translateX(5px);}}
+.shake{animation:shake .4s cubic-bezier(.36,.07,.19,.97) both;}
+@keyframes flipDown{0%{transform:rotateX(0);}50%{transform:rotateX(-90deg);}100%{transform:rotateX(0);}}
+.flip{animation:flipDown .5s var(--ease) forwards;}
+@keyframes bounceWin{0%,100%{transform:translateY(0);}30%{transform:translateY(-14px);}50%{transform:translateY(0);}70%{transform:translateY(-6px);}}
+.bounce{animation:bounceWin .6s var(--ease);}
+
+.cw-container{display:flex; gap:22px; margin-bottom:10px; flex-wrap:wrap; justify-content:center; align-items:flex-start;}
+.cw-grid-wrap{background:var(--text); padding:3px; border-radius:4px; transition:background .3s ease;}
+.cw-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:3px;}
+.cw-cell{width:40px; height:40px; background:var(--surface); position:relative; border-radius:1px;}
+.cw-cell.blocked{background:var(--text); transition:background .3s ease;}
+.cw-cell input{
+  width:100%; height:100%; border:none; text-align:center; font-size:1.1rem; text-transform:uppercase;
+  font-weight:700; outline:none; background:transparent; color:var(--text); cursor:pointer; font-family:var(--font);
+  transition:background .2s ease;
+}
+.cw-cell input:focus{background:var(--accent-soft);}
+.cw-cell.correct-cell input{color:var(--w-correct) !important;}
+.cw-cell.incorrect-cell input{color:var(--danger) !important;}
+.cw-num{position:absolute; top:1px; left:3px; font-size:.5rem; font-weight:700; color:var(--text-muted); pointer-events:none;}
+.cw-clues{flex:1; min-width:190px; display:flex; flex-direction:column; gap:10px; font-size:.82rem;}
+.clue-section h3{font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); border-bottom:1px solid var(--border); padding-bottom:4px; margin-bottom:6px;}
+.clue-item{margin-bottom:4px; display:flex; gap:8px;}
+.clue-item strong{min-width:12px; color:var(--text-muted);}
+
+.conn-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+.conn-mistakes{display:flex; align-items:center; gap:6px; font-weight:600; font-size:.8rem; color:var(--text-muted);}
+.mistake-dot{width:9px; height:9px; background:var(--text); border-radius:50%; transition:background .3s ease, transform .3s ease;}
+.mistake-dot.lost{background:var(--border); transform:scale(.8);}
+.conn-board{display:flex; flex-direction:column; gap:6px; margin-bottom:14px;}
+.conn-tile-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
+.conn-tile{
+  background:var(--accent-soft); border:none; aspect-ratio:2/1; font-weight:700; font-size:.72rem;
+  border-radius:6px; cursor:pointer; text-transform:uppercase; color:var(--text);
+  transition:transform .12s var(--ease), background .2s var(--ease); display:flex; justify-content:center; align-items:center;
+  text-align:center; padding:4px;
+}
+.conn-tile.selected{background:var(--c-selected); color:#fff;}
+.conn-tile:active{transform:scale(.94);}
+.conn-group{
+  border-radius:8px; display:flex; flex-direction:column; justify-content:center; align-items:center;
+  text-align:center; padding:12px; color:#1a1a1a;
+}
+.conn-group.reveal{animation:pop .35s var(--ease);}
+.conn-group h3{font-size:.82rem; margin-bottom:2px; text-transform:uppercase; letter-spacing:.05em; font-weight:800;}
+.conn-group p{font-size:.68rem; text-transform:uppercase; opacity:.85; font-weight:600;}
+.conn-actions{display:flex; gap:8px; justify-content:center; margin-bottom:8px;}
+.conn-btn{background:transparent; border:1.5px solid var(--text); color:var(--text); border-radius:20px; padding:9px 18px; font-weight:600; font-size:.85rem; cursor:pointer; transition:.2s var(--ease);}
+.conn-btn.active{background:var(--text); color:var(--bg);}
+.conn-btn:hover{transform:translateY(-1px);}
+@keyframes pop{0%{transform:scale(.85);}40%{transform:scale(1.06);}100%{transform:scale(1);}}
+
+.bee-wrapper{display:flex; flex-direction:column; align-items:center; margin-bottom:8px;}
+.bee-current{
+  min-height:34px; font-size:1.4rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  margin-bottom:20px; color:var(--text); text-align:center; word-break:break-all; width:100%;
+}
+.bee-current .center-letter{color:var(--bee-center); text-shadow:0 0 1px var(--text-muted);}
+.bee-current .invalid-letter{color:var(--text-muted); opacity:.5;}
+.bee-hive{position:relative; width:240px; height:240px; margin-bottom:20px;}
+.hex{
+  position:absolute; clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background:var(--bee-fill); border:none; display:flex; align-items:center; justify-content:center;
+  font-weight:800; text-transform:uppercase; cursor:pointer; color:var(--bee-text);
+  transition:transform .12s var(--ease), background .2s var(--ease);
+}
+.hex:hover{transform:scale(1.05);}
+.hex:active{transform:scale(.93);}
+.hex.center-hex{background:var(--bee-center); color:var(--bee-text); z-index:2;}
+.bee-found-label{font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); margin-bottom:4px;}
+.bee-actions{display:flex; gap:10px; justify-content:center; margin-bottom:16px;}
+.bee-icon-btn{
+  width:44px; height:44px; border-radius:50%; border:1.5px solid var(--border); background:var(--surface);
+  color:var(--text); font-size:.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:.2s var(--ease);
+}
+.bee-icon-btn:hover{border-color:var(--accent); color:var(--accent);}
+.bee-enter-btn{
+  border-radius:20px; border:1.5px solid var(--text); background:var(--text); color:var(--bg);
+  padding:0 20px; font-weight:700; font-size:.85rem; cursor:pointer; transition:.2s var(--ease);
+}
+.bee-found-list{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:8px; max-height:90px; overflow-y:auto; padding:4px; width:100%;}
+.bee-found-word{background:var(--accent-soft); color:var(--accent); font-size:.7rem; font-weight:700; padding:4px 10px; border-radius:12px; text-transform:uppercase;}
+.bee-found-word.pangram{background:var(--bee-center); color:#fff;}
+.bee-status{text-align:center; font-size:.8rem; color:var(--text-muted); margin-bottom:12px;}
+
+#country-silhouette{display:flex; justify-content:center; align-items:center; height:220px; margin-bottom:14px;}
+#country-silhouette svg{width:100%; height:100%; max-width:320px;}
+#country-silhouette path{fill:var(--text); transition:fill .3s ease;}
+.swap-row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; font-size:.85rem; color:var(--text-muted); flex-wrap:wrap;}
+
+.autocomplete-wrap{position:relative;}
+.autocomplete-list{
+  position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--surface); border:1.5px solid var(--border);
+  border-radius:8px; box-shadow:var(--shadow); max-height:190px; overflow-y:auto; z-index:60; display:none;
+}
+.autocomplete-list.open{display:block;}
+.autocomplete-item{padding:9px 14px; font-size:.85rem; cursor:pointer; color:var(--text); transition:background .15s ease;}
+.autocomplete-item:hover, .autocomplete-item.active{background:var(--accent-soft);}
+.autocomplete-empty{padding:9px 14px; font-size:.8rem; color:var(--text-muted);}
+
+.people-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px;}
+.people-tile{
+  border:1.5px dashed var(--border); border-radius:8px; min-height:44px; display:flex; align-items:center;
+  justify-content:center; font-size:.72rem; font-weight:600; text-align:center; padding:6px; color:var(--text-muted);
+  transition:.2s var(--ease);
+}
+.people-tile.filled{border-style:solid; border-color:var(--accent); background:var(--accent-soft); color:var(--text); animation:pop .3s var(--ease);}
+.people-input-row{display:flex; gap:8px; margin-bottom:10px;}
+.people-input-row input{flex:1;}
+.people-input-row button{padding:0 18px; border-radius:8px; border:none; background:var(--text); color:var(--bg); font-weight:600; cursor:pointer; transition:.2s var(--ease);}
+.people-input-row button:hover:not(:disabled){opacity:.85;}
+.people-input-row button:disabled{opacity:.5; cursor:default;}
+.people-count{text-align:center; font-size:.8rem; color:var(--text-muted); margin-bottom:8px;}
+
+#certificate{background:var(--surface); padding:32px; text-align:center; border-radius:12px; border:1px solid var(--border); position:relative; margin-bottom:14px;}
+#certificate h1{font-size:1.7rem;}
+#certificate h2{color:var(--accent); font-size:1.5rem; margin:12px 0; border-bottom:2px solid var(--text); display:inline-block; padding-bottom:4px;}
+.cert-score{font-size:3.2rem; font-weight:800; margin:14px 0 4px 0;}
+.cert-time{font-size:.9rem; color:var(--text-muted); margin-bottom:10px;}
+.cert-breakdown{text-align:left; max-width:340px; margin:0 auto 10px auto; display:flex; flex-direction:column; gap:5px;}
+.cert-breakdown-item{display:flex; align-items:center; gap:8px; font-size:.78rem; color:var(--text);}
+.cert-breakdown-item i{width:14px; text-align:center; flex-shrink:0;}
+.cert-breakdown-item.correct i{color:var(--w-correct);}
+.cert-breakdown-item.incorrect i{color:var(--danger);}
+.cert-breakdown-item.unknown i{color:var(--text-muted);}
+.cert-stamp{position:absolute; bottom:18px; right:18px; color:var(--accent); font-size:2.6rem; opacity:.85;}
+
+#toast{
+  position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-12px); background:var(--text); color:var(--bg);
+  padding:10px 20px; border-radius:8px; font-weight:600; font-size:.85rem; opacity:0; pointer-events:none;
+  transition:opacity .3s var(--ease), transform .3s var(--ease); z-index:1200;
+}
+#toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+.util-fab-wrap{
+  position:fixed;
+  bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
+  right:calc(env(safe-area-inset-right, 0px) + 10px);
+  z-index:900; display:flex; align-items:flex-end; gap:10px;
+}
+.util-fab{
+  width:46px; height:46px; border-radius:50%; background:var(--text); color:var(--bg); border:none;
+  font-size:1rem; cursor:pointer; box-shadow:var(--shadow); display:flex; align-items:center; justify-content:center;
+  transition:transform .3s var(--ease); flex-shrink:0;
+}
+.util-fab.open{transform:rotate(135deg);}
+.util-menu{
+  background:var(--surface); border:1.5px solid var(--border); border-radius:14px; box-shadow:var(--shadow);
+  padding:8px; display:flex; flex-direction:column; gap:2px; min-width:190px;
+  opacity:0; pointer-events:none; transform:translateX(10px) scale(.94); transform-origin:bottom right;
+  transition:.22s var(--ease);
+}
+.util-menu.open{opacity:1; pointer-events:all; transform:translateX(0) scale(1);}
+.util-menu-item{
+  display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; cursor:pointer;
+  font-size:.85rem; font-weight:600; color:var(--text); background:none; border:none; width:100%; text-align:left;
+  transition:background .15s ease;
+}
+.util-menu-item:hover{background:var(--accent-soft);}
+.util-menu-item i{width:16px; text-align:center; color:var(--text-muted);}
+
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,0); display:none; align-items:center; justify-content:center;
+  z-index:1500; padding:20px; transition:background .25s var(--ease);
+}
+.modal-overlay.active{display:flex; background:rgba(0,0,0,.45);}
+.modal-box{
+  background:var(--surface); color:var(--text); border-radius:14px; padding:28px; width:100%; max-width:440px;
+  box-shadow:var(--shadow); max-height:80vh; overflow-y:auto; overflow-x:hidden;
+  word-wrap:break-word; overflow-wrap:break-word;
+  transform:scale(.94) translateY(8px); opacity:0; transition:transform .25s var(--ease), opacity .25s var(--ease);
+}
+.modal-overlay.active .modal-box{transform:scale(1) translateY(0); opacity:1;}
+.modal-box h3{margin-bottom:12px; font-size:1.1rem;}
+.modal-box p, .modal-box li{font-size:.85rem; color:var(--text-muted); line-height:1.55;}
+.modal-box ul, .modal-box ol{padding-left:18px; margin:8px 0;}
+.modal-box .admin-answer{margin-bottom:12px; font-size:.85rem;}
+.modal-box .admin-answer strong{color:var(--text);}
+.modal-actions{display:flex; gap:10px; margin-top:18px;}
+.modal-close{margin-top:14px; background:transparent; border:1.5px solid var(--border); color:var(--text); padding:9px 16px; border-radius:8px; font-weight:600; cursor:pointer; width:100%; transition:.2s var(--ease);}
+.modal-close:hover{border-color:var(--text-muted);}
+.visually-hidden{position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;}
+
+@media (max-width:600px){
+  body{padding:24px 12px calc(24px + env(safe-area-inset-bottom)) 12px;}
+  .app-container{padding:24px 18px;}
+  .wordle-tile{width:42px; height:42px; font-size:1.2rem;}
+  .cw-cell{width:34px; height:34px;}
+  .cw-cell input{font-size:.95rem;}
+  .people-grid{grid-template-columns:repeat(3,1fr);}
+  h1{font-size:1.55rem;}
+  .conn-tile{font-size:.64rem;}
+  .bee-hive{width:210px; height:210px;}
+}
+@media (max-width:380px){
+  .wordle-tile{width:36px; height:36px; font-size:1.05rem;}
+  .key{padding:10px 0; font-size:.7rem;}
+  .cw-cell{width:29px; height:29px;}
+  .cw-cell input{font-size:.8rem;}
+  .util-fab{width:42px; height:42px; font-size:.9rem;}
+  .bee-hive{width:190px; height:190px;}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-decor" aria-hidden="true">
+  <div class="dots"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+</div>
+
+<div id="toast">Message here</div>
+
+<div class="progress-hud hidden" id="progress-hud">
+  <div class="progress-pill" id="progress-pill">Q1 / 10</div>
+  <div class="stopwatch-pill"><i class="fas fa-stopwatch"></i><span id="stopwatch-display">00:00</span></div>
+</div>
+
+<div class="util-fab-wrap">
+  <div class="util-menu" id="util-menu">
+    <button class="util-menu-item" onclick="closeUtilMenuAnd(openAdminPrompt)"><i class="fas fa-user-shield"></i> Admin panel</button>
+    <button class="util-menu-item" onclick="closeUtilMenuAnd(toggleTheme)"><i class="fas fa-moon" id="theme-icon-inner"></i> Toggle dark mode</button>
+    <button class="util-menu-item" onclick="closeUtilMenuAnd(skipQuestion)"><i class="fas fa-forward"></i> Skip question</button>
+    <button class="util-menu-item" onclick="closeUtilMenuAnd(restartQuiz)"><i class="fas fa-arrow-rotate-right"></i> Restart quiz</button>
+  </div>
+  <button class="util-fab" id="util-fab" onclick="toggleUtilBar()"><i class="fas fa-ellipsis"></i></button>
+</div>
+
+<div class="modal-overlay" id="admin-pass-modal">
+  <div class="modal-box">
+    <h3>Administrator Panel</h3>
+    <p style="margin-bottom:10px;">Enter the administrator password.</p>
+    <input type="text" name="fakeusernameremembered" class="visually-hidden" tabindex="-1" autocomplete="off">
+    <input type="password" name="fakepasswordremembered" class="visually-hidden" tabindex="-1" autocomplete="off">
+    <input type="password" id="admin-pass-input" name="admin-secret-code-field" placeholder="Password"
+           autocomplete="new-password" spellcheck="false" autocapitalize="off" autocorrect="off"
+           style="width:100%; padding:12px; border:1.5px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-family:var(--font); font-size:16px;">
+    <div class="modal-actions">
+      <button class="btn-primary" style="margin:0;" onclick="checkAdminPassword()">Unlock</button>
+      <button class="modal-close" style="margin:0;" onclick="closeModal('admin-pass-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="admin-answers-modal">
+  <div class="modal-box" id="admin-answers-content"></div>
+</div>
+
+<div class="modal-overlay" id="help-modal">
+  <div class="modal-box" id="help-modal-content"></div>
+</div>
+
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-box">
+    <h3 id="confirm-modal-title">Are you sure?</h3>
+    <p id="confirm-modal-text"></p>
+    <div class="modal-actions">
+      <button class="btn-primary" style="margin:0;" id="confirm-modal-yes">Yes</button>
+      <button class="modal-close" style="margin:0;" onclick="closeModal('confirm-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="app-container" id="app-container">
+
+  <div id="screen-0" class="screen active">
+    <h1>Lemon's Quiz</h1>
+    <div class="input-group" style="margin-top:20px;">
+      <input type="text" id="username" placeholder="Enter your name to begin..." autocomplete="off" oninput="checkInputValidity(this,'start-btn')">
+    </div>
+    <button class="btn-primary" id="start-btn" disabled onclick="startGame()">Start Quiz <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="screen-1" class="screen">
+    <h2>Today's the day!</h2>
+    <p class="subtitle">When is my birthday?</p>
+    <div class="bday-row">
+      <input type="number" id="q1-month" min="1" max="12" value="1">
+      <span class="bday-sep">/</span>
+      <input type="number" id="q1-day" min="1" max="31" value="1">
+    </div>
+    <p class="bday-hint">Month / Day, adjust the numbers above to your best guess</p>
+    <button class="btn-primary" id="q1-btn" onclick="submitQ1()">Next Question <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="screen-2" class="screen">
+    <h2>It's Basically a 50/50...</h2>
+    <p class="subtitle">What is my most played game on Steam?</p>
+    <div class="mcq-grid" id="q2-grid">
+      <label class="mcq-option" onclick="selectMCQ(this,'q2-btn')"><input type="radio" name="q2" value="a"> Marvel Rivals</label>
+      <label class="mcq-option" onclick="selectMCQ(this,'q2-btn')"><input type="radio" name="q2" value="b"> Dead by Daylight</label>
+      <label class="mcq-option" onclick="selectMCQ(this,'q2-btn')"><input type="radio" name="q2" value="c"> Phasmophobia</label>
+      <label class="mcq-option" onclick="selectMCQ(this,'q2-btn')"><input type="radio" name="q2" value="d"> Overwatch</label>
+      <label class="mcq-option" onclick="selectMCQ(this,'q2-btn')"><input type="radio" name="q2" value="e"> None of the above</label>
+    </div>
+    <button class="btn-primary" id="q2-btn" disabled onclick="submitQ2()">Next Question <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="screen-3" class="screen">
+    <h2>Wordle <button class="help-btn" onclick="showWordleHelp()">?</button></h2>
+    <p class="subtitle">Solve this Wordle.</p>
+    <div class="wordle-wrapper">
+      <div class="wordle-board" id="wordle-board"></div>
+      <div class="wordle-keyboard" id="wordle-keyboard"></div>
+    </div>
+    <button class="btn-primary" id="btn-w-next" style="display:none;" onclick="advance(4)">Next Question <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="screen-4" class="screen">
+    <h2>The Mini Crossword <button class="help-btn" onclick="showMiniHelp()">?</button></h2>
+    <p class="subtitle">Solve this 5x5 mini crossword.</p>
+    <div class="cw-container">
+      <div class="cw-grid-wrap"><div class="cw-grid" id="cw-grid"></div></div>
+      <div class="cw-clues">
+        <div class="clue-section">
+          <h3>Across</h3>
+          <div class="clue-item"><strong>1</strong> Sense or perceive an emotion</div>
+          <div class="clue-item"><strong>5</strong> Santa's little helpers</div>
+          <div class="clue-item"><strong>7</strong> Higher than, overhead</div>
+          <div class="clue-item"><strong>8</strong> A symbolic item, or an arcade coin</div>
+          <div class="clue-item"><strong>9</strong> Unwanted garden plant</div>
+        </div>
+        <div class="clue-section">
+          <h3>Down</h3>
+          <div class="clue-item"><strong>1</strong> An impressive achievement</div>
+          <div class="clue-item"><strong>2</strong> Joint between forearm and upper arm</div>
+          <div class="clue-item"><strong>3</strong> Bring a memory or feeling to mind</div>
+          <div class="clue-item"><strong>4</strong> Embankment built to hold back flooding</div>
+          <div class="clue-item"><strong>6</strong> To dispatch, like a letter</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-secondary" id="cw-check-btn" onclick="autoCheckCrossword()" style="margin-bottom:8px;">Check puzzle (one-time use)</button>
+    <button class="btn-primary" id="cw-submit-btn" disabled onclick="submitQ4()">Next Question <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="screen-5" class="screen">
+    <h2>Spelling Bee <button class="help-btn" onclick="showBeeHelp()">?</button></h2>
+    <p class="subtitle">Find the pangram, a word using every letter at least once, to pass.</p>
+    <div class="bee-wrapper">
+      <div class="bee-current" id="bee-current">&nbsp;</div>
+      <div class="bee-hive" id="bee-hive"></div>
+      <div class="bee-actions">
+        <button class="bee-icon-btn" onclick="beeDelete()"><i class="fas fa-delete-left"></i></button>
+        <button class="bee-icon-btn" onclick="beeShuffle()"><i class="fas fa-shuffle"></i></button>
+        <button class="bee-enter-btn" onclick="beeSubmit()">Enter</button>
+      </div>
+      <div class="bee-status" id="bee-status">0 words found</div>
+      <div class="bee-found-label">Your words</div>
+      <div class="bee-found-list" id="bee-found-list"></div>
+    </div>
+    <button class="btn-primary" id="btn-bee-next" style="display:none;" onclick="advance(6)">Next Question <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="screen-6" class="screen">
+    <div class="conn-header">
+      <h2>Connections <button class="help-btn" onclick="showConnHelp()">?</button></h2>
+      <div class="conn-mistakes" id="conn-mistakes-ui">
+        Mistakes remaining:
+        <div class="mistake-dot"></div><div class="mistake-dot"></div><div class="mistake-dot"></div><div class="mistake-dot"></div>
+      </div>
+    </div>
+    <p class="subtitle">Create 4 groups of 4!</p>
+    <div class="conn-board" id="conn-board">
+      <div id="conn-groups"></div>
+      <div class="conn-tile-grid" id="conn-tiles"></div>
+    </div>
+    <div class="conn-actions" id="conn-actions">
+      <button class="conn-btn" onclick="shuffleConn()">Shuffle</button>
+      <button class="conn-btn" id="conn-submit" onclick="submitConnSelection()">Submit</button>
+    </div>
+    <button class="btn-primary" id="btn-c-next" style="display:none;" onclick="advance(7)">Next Question <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="screen-7" class="screen">
+    <h2>Name That Country!</h2>
+    <p class="subtitle">Name the country shown below.</p>
+    <div id="country-silhouette"><span style="color:var(--text-muted); font-size:.85rem;">Loading map...</span></div>
+    <div class="input-group autocomplete-wrap">
+      <input type="text" id="country-input" placeholder="Type a country name..." autocomplete="off" oninput="onCountryInput()" onfocus="onCountryInput()">
+      <div class="autocomplete-list" id="country-autocomplete"></div>
+    </div>
+    <div class="swap-row">
+      <span>Swaps remaining: <strong id="swaps-left">2</strong></span>
+      <button class="btn-secondary" onclick="swapCountry()">Swap country</button>
+    </div>
+    <button class="btn-primary" onclick="submitCountry()">Next Question <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="screen-8" class="screen">
+    <h2>Prove You Support Women. <button class="help-btn" onclick="showPeopleHelp()">?</button></h2>
+    <p class="subtitle">Name 12 women.</p>
+    <div class="people-count"><span id="women-count">0</span> / 12</div>
+    <div class="people-input-row">
+      <input type="text" id="women-input" placeholder="Type a name..." onkeydown="if(event.key==='Enter')addPerson('women')">
+      <button onclick="addPerson('women')" id="women-add-btn">Add</button>
+    </div>
+    <div class="people-grid" id="women-grid"></div>
+    <button class="btn-primary" id="women-next-btn" disabled onclick="submitPeopleQuestion('women',8,9)">Next Question <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="screen-9" class="screen">
+    <h2>It's Only Fair For This Question. <button class="help-btn" onclick="showPeopleHelp()">?</button></h2>
+    <p class="subtitle">Name 12 men.</p>
+    <div class="people-count"><span id="men-count">0</span> / 12</div>
+    <div class="people-input-row">
+      <input type="text" id="men-input" placeholder="Type a name..." onkeydown="if(event.key==='Enter')addPerson('men')">
+      <button onclick="addPerson('men')" id="men-add-btn">Add</button>
+    </div>
+    <div class="people-grid" id="men-grid"></div>
+    <button class="btn-primary" id="men-next-btn" disabled onclick="submitPeopleQuestion('men',9,10)">Next Question <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="screen-10" class="screen">
+    <h2>Pride Month is Every Month! <button class="help-btn" onclick="showPeopleHelp()">?</button></h2>
+    <p class="subtitle">Name 21 LGBTQ+ people.</p>
+    <div class="people-count"><span id="pride-count">0</span> / 21</div>
+    <div class="people-input-row">
+      <input type="text" id="pride-input" placeholder="Type a name..." onkeydown="if(event.key==='Enter')addPerson('pride')">
+      <button onclick="addPerson('pride')" id="pride-add-btn">Add</button>
+    </div>
+    <div class="people-grid" id="pride-grid"></div>
+    <button class="btn-primary" id="pride-next-btn" disabled onclick="submitPeopleQuestion('pride',10,11)">Finish Quiz <i class="fas fa-flag-checkered"></i></button>
+  </div>
+
+  <div id="screen-11" class="screen">
+    <div id="certificate">
+      <h1>Lemon's Quiz Certificate</h1>
+      <p style="color:var(--text-muted); font-size:.95rem; margin-top:8px;">This certifies that</p>
+      <h2 id="cert-name">Name</h2>
+      <p style="color:var(--text-muted); font-size:.95rem;">has completed Lemon's Quiz with a score of:</p>
+      <div class="cert-score" id="cert-score">0/10</div>
+      <div class="cert-time" id="cert-time">Time: 00:00</div>
+      <div class="cert-breakdown" id="cert-breakdown"></div>
+      <i class="fas fa-medal cert-stamp"></i>
+    </div>
+    <button class="btn-primary" onclick="downloadCertificate()"><i class="fas fa-download"></i> Download Certificate</button>
+  </div>
+
+</div>
+
+<script>
+let playerName = "";
+let finalScore = 0;
+const TOTAL_QUESTIONS = 10;
+let currentScreen = 0;
+const CORRECT_MONTH = 7, CORRECT_DAY = 26;
+const ADMIN_PASSWORD = "vicmichaelisisthebest";
+const QUESTION_SCREEN_MAP = {1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10};
+const QUESTION_TITLES = {
+  1:"Today's the day!",
+  2:"It's Basically a 50/50...",
+  3:"Wordle",
+  4:"The Mini Crossword",
+  5:"Spelling Bee",
+  6:"Connections",
+  7:"Name That Country!",
+  8:"Prove You Support Women.",
+  9:"It's Only Fair For This Question.",
+  10:"Pride Month is Every Month!"
+};
+function freshQuestionResults(){
+  return {1:null,2:null,3:null,4:null,5:null,6:null,7:null,8:null,9:null,10:null};
+}
+let questionResults = freshQuestionResults();
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.innerText = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._tm);
+  showToast._tm = setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+function showConfirm(title, text, onYes){
+  document.getElementById('confirm-modal-title').innerText = title;
+  document.getElementById('confirm-modal-text').innerText = text;
+  const yesBtn = document.getElementById('confirm-modal-yes');
+  const newYes = yesBtn.cloneNode(true);
+  yesBtn.parentNode.replaceChild(newYes, yesBtn);
+  newYes.addEventListener('click', ()=>{
+    closeModal('confirm-modal');
+    onYes();
+  });
+  document.getElementById('confirm-modal').classList.add('active');
+}
+
+function updateProgressHud(){
+  const hud = document.getElementById('progress-hud');
+  if(currentScreen>=1 && currentScreen<=TOTAL_QUESTIONS){
+    hud.classList.remove('hidden');
+    document.getElementById('progress-pill').innerText = `Q${currentScreen} / ${TOTAL_QUESTIONS}`;
+  } else if(currentScreen===11){
+    hud.classList.remove('hidden');
+    document.getElementById('progress-pill').innerText = `Done!`;
+  } else {
+    hud.classList.add('hidden');
+  }
+}
+
+let stopwatchInterval = null, stopwatchStart = null, stopwatchElapsedMs = 0, stopwatchRunning = false;
+function formatTime(ms){
+  const totalSec = Math.floor(ms/1000);
+  const m = Math.floor(totalSec/60).toString().padStart(2,'0');
+  const s = (totalSec%60).toString().padStart(2,'0');
+  return `${m}:${s}`;
+}
+function startStopwatch(){
+  stopwatchStart = Date.now();
+  stopwatchElapsedMs = 0;
+  stopwatchRunning = true;
+  clearInterval(stopwatchInterval);
+  stopwatchInterval = setInterval(()=>{
+    document.getElementById('stopwatch-display').innerText = formatTime(Date.now()-stopwatchStart);
+  }, 250);
+}
+function stopStopwatch(){
+  if(!stopwatchRunning) return;
+  stopwatchElapsedMs = Date.now()-stopwatchStart;
+  stopwatchRunning = false;
+  clearInterval(stopwatchInterval);
+  document.getElementById('stopwatch-display').innerText = formatTime(stopwatchElapsedMs);
+}
+
+function advance(nextScreenId){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(`screen-${nextScreenId}`).classList.add('active');
+  currentScreen = nextScreenId;
+  updateProgressHud();
+  window.scrollTo({top:0, behavior:'smooth'});
+  if(nextScreenId===3) initWordle();
+  if(nextScreenId===4) buildCrosswordGrid();
+  if(nextScreenId===5) initBee();
+  if(nextScreenId===6) initConnections();
+  if(nextScreenId===7) initCountryGame();
+  if(nextScreenId===8) initPeopleGame('women');
+  if(nextScreenId===9) initPeopleGame('men');
+  if(nextScreenId===10) initPeopleGame('pride');
+  if(nextScreenId===11){ stopStopwatch(); buildResults(); }
+}
+
+function checkInputValidity(inputEl, btnId){
+  document.getElementById(btnId).disabled = inputEl.value.trim().length === 0;
+}
+
+function startGame(){
+  const input = document.getElementById('username').value.trim();
+  if(!input) return showToast("Please enter your name!");
+  playerName = input;
+  startStopwatch();
+  advance(1);
+}
+
+function toggleTheme(){
+  document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  document.getElementById('theme-icon-inner').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+}
+
+function toggleUtilBar(){
+  document.getElementById('util-menu').classList.toggle('open');
+  document.getElementById('util-fab').classList.toggle('open');
+}
+function closeUtilMenuAnd(fn){
+  document.getElementById('util-menu').classList.remove('open');
+  document.getElementById('util-fab').classList.remove('open');
+  fn();
+}
+
+function skipQuestion(){
+  if(currentScreen===0 || currentScreen===11) return showToast("Nothing to skip here.");
+  showConfirm("Skip this question?", "It will be counted as incorrect.", ()=>{
+    questionResults[currentScreen] = false;
+    const nextMap = {1:2,2:3,3:4,4:5,5:6,6:7,7:8,8:9,9:10,10:11};
+    const next = nextMap[currentScreen];
+    if(next) advance(next);
+  });
+}
+
+function restartQuiz(){
+  showConfirm("Restart the entire quiz?", "All progress will be lost.", ()=>{
+    finalScore = 0; playerName = "";
+    questionResults = freshQuestionResults();
+    stopStopwatch(); clearInterval(stopwatchInterval);
+    document.getElementById('stopwatch-display').innerText = "00:00";
+    document.getElementById('username').value = "";
+    document.getElementById('start-btn').disabled = true;
+    resetAllQuizState();
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('screen-0').classList.add('active');
+    currentScreen = 0;
+    updateProgressHud();
+  });
+}
+
+function resetAllQuizState(){
+  document.getElementById('q1-month').value = 1;
+  document.getElementById('q1-day').value = 1;
+  document.querySelectorAll('#q2-grid .mcq-option').forEach(o=>o.classList.remove('selected'));
+  document.querySelectorAll('input[name="q2"]').forEach(r=>r.checked=false);
+  document.getElementById('q2-btn').disabled = true;
+  wRow=0; wCol=0; wFinished=false; wLocked=false; keyStates={};
+  document.getElementById('wordle-board').innerHTML='';
+  document.getElementById('wordle-keyboard').innerHTML='';
+  cwChecked=false;
+  document.getElementById('cw-grid').innerHTML='';
+  beeCurrentWord=''; beeFoundWords=[]; beePassed=false;
+  document.getElementById('bee-hive').innerHTML='';
+  document.getElementById('bee-found-list').innerHTML='';
+  document.getElementById('bee-status').innerText='0 words found';
+  cTiles=[]; cSelected=[]; cMistakes=4; cGroupsFound=0; cPreviousGuesses=[];
+  document.getElementById('conn-groups').innerHTML='';
+  document.getElementById('conn-tiles').innerHTML='';
+  document.querySelectorAll('.mistake-dot').forEach(d=>d.classList.remove('lost'));
+  targetCountry=null; seenCountryNames=[]; swapsLeft=2;
+  document.getElementById('country-input').value='';
+  document.getElementById('country-silhouette').innerHTML = '<span style="color:var(--text-muted); font-size:.85rem;">Loading map...</span>';
+  closeCountryAutocomplete();
+  ['women','men','pride'].forEach(type=>{
+    peopleState[type].list = [];
+    document.getElementById(`${type}-input`).value='';
+    document.getElementById(`${type}-grid`).innerHTML='';
+  });
+}
+
+function openAdminPrompt(){
+  const input = document.getElementById('admin-pass-input');
+  input.value = '';
+  document.getElementById('admin-pass-modal').classList.add('active');
+  setTimeout(()=>input.focus(), 50);
+}
+function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+function checkAdminPassword(){
+  const pass = document.getElementById('admin-pass-input').value;
+  if(pass === ADMIN_PASSWORD){
+    closeModal('admin-pass-modal');
+    buildAdminAnswers();
+    document.getElementById('admin-answers-modal').classList.add('active');
+  } else {
+    showToast("Incorrect password.");
+  }
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && document.getElementById('admin-pass-modal').classList.contains('active')){
+    checkAdminPassword();
+  }
+});
+function buildAdminAnswers(){
+  const currentTarget = (typeof targetCountry !== 'undefined' && targetCountry) ? targetCountry.properties.name : "(not yet reached)";
+  const html = `
+    <h3>Administrator Panel - All Answers</h3>
+    <div class="admin-answer"><strong>Q1 Birthday:</strong> ${CORRECT_MONTH}/${CORRECT_DAY} (July 26)</div>
+    <div class="admin-answer"><strong>Q2 Steam Game:</strong> Dead by Daylight</div>
+    <div class="admin-answer"><strong>Q3 Wordle:</strong> LEMON</div>
+    <div class="admin-answer"><strong>Q4 Crossword Across:</strong> FEEL, ELVES, ABOVE, TOKEN, WEED</div>
+    <div class="admin-answer"><strong>Q4 Crossword Down:</strong> FEAT, ELBOW, EVOKE, LEVEE, SEND</div>
+    <div class="admin-answer"><strong>Q5 Spelling Bee:</strong> Letters G A N I T E, center R. Pangram (needed to pass): GRANITE. Other valid words: GRAIN, GRATE, GRANT, TRAIN, RATING, GARNET, TARN, RANT, GRATIN, NITRATE, plus any other real dictionary word using only these letters and including R.</div>
+    <div class="admin-answer"><strong>Q6 Connections:</strong><br>
+      Things you blow: CANDLES, WHISTLE, KISS, HORN<br>
+      ___ Cake: CUP, PAN, FRUIT, SHORT<br>
+      Number homophones: WON, TOO, ATE, FORE<br>
+      Words before "hat": PARTY, TOP, HARD, WITCH
+    </div>
+    <div class="admin-answer"><strong>Q7 Country (current target):</strong> ${currentTarget}, randomized each playthrough</div>
+    <div class="admin-answer"><strong>Q8 / Q9 Name people:</strong> Open-ended, verified live against Wikipedia/Wikidata (must be a real, distinct person of the requested gender with a Wikipedia article).</div>
+    <div class="admin-answer"><strong>Q10 Prove You Support Pride:</strong> Open-ended, verified against Wikidata (must have a documented LGBTQ+ related sexual orientation or gender identity claim).</div>
+  `;
+  document.getElementById('admin-answers-content').innerHTML = html + `<button class="modal-close" onclick="closeModal('admin-answers-modal')">Close</button>`;
+}
+
+function showHelp(html){
+  document.getElementById('help-modal-content').innerHTML = html + `<button class="modal-close" onclick="closeModal('help-modal')">Close</button>`;
+  document.getElementById('help-modal').classList.add('active');
+}
+function showWordleHelp(){
+  showHelp(`<h3>How to Play Wordle</h3>
+    <p>Guess the 5-letter word in 6 tries.</p>
+    <ul>
+      <li>Each guess must be a valid 5-letter word.</li>
+      <li>A <strong>green</strong> tile means the letter is correct and in the right spot.</li>
+      <li>A <strong>yellow</strong> tile means the letter is in the word but in the wrong spot.</li>
+      <li>A <strong>gray</strong> tile means the letter isn't in the word at all.</li>
+    </ul>`);
+}
+function showMiniHelp(){
+  showHelp(`<h3>How to Play the Mini Crossword</h3>
+    <p>Fill every open square in the grid using the across and down clues.</p>
+    <ul>
+      <li>The dark shaded squares are blocked and are not part of any word.</li>
+      <li>Click a square and type to fill it in; arrow keys move between cells.</li>
+      <li>The grid must be completely filled before you can submit.</li>
+      <li>You get one free "Check puzzle", it marks each filled letter green (correct) or red (incorrect), for one-time use only.</li>
+    </ul>`);
+}
+function showBeeHelp(){
+  showHelp(`<h3>How to Play Spelling Bee</h3>
+    <p>Make words using the 7 letters shown in the honeycomb.</p>
+    <ul>
+      <li>Every word must include the center (highlighted) letter.</li>
+      <li>Words must be at least 4 letters long. Letters can be reused.</li>
+      <li>Find the pangram, a word that uses all 7 letters at least once, to pass this question.</li>
+      <li>Click the letters or type on your keyboard, then hit Enter.</li>
+    </ul>`);
+}
+function showConnHelp(){
+  showHelp(`<h3>How to Play Connections</h3>
+    <p>Find groups of four items that share something in common.</p>
+    <ul>
+      <li>Select four tiles, then hit Submit.</li>
+      <li>Find all 4 groups before you run out of mistakes.</li>
+      <li>Categories range from straightforward (yellow) to tricky (purple), watch out for red herrings!</li>
+    </ul>`);
+}
+function showPeopleHelp(){
+  showHelp(`<h3>How to Answer This Question</h3>
+    <p>Name real, distinct people who fit the category.</p>
+    <ul>
+      <li>Each person must be a real, distinct individual (they can be living or deceased).</li>
+      <li>Each person must have their own Wikipedia article.</li>
+      <li>No repeats, each person only counts once.</li>
+    </ul>`);
+}
+
+function submitQ1(){
+  const m = parseInt(document.getElementById('q1-month').value, 10);
+  const d = parseInt(document.getElementById('q1-day').value, 10);
+  const correct = (m === CORRECT_MONTH && d === CORRECT_DAY);
+  questionResults[1] = correct;
+  if(correct) finalScore++;
+  advance(2);
+}
+
+function selectMCQ(el, btnId){
+  document.querySelectorAll('.mcq-option').forEach(opt=>opt.classList.remove('selected'));
+  el.classList.add('selected');
+  el.querySelector('input').checked = true;
+  document.getElementById(btnId).disabled = false;
+}
+function submitQ2(){
+  const selected = document.querySelector('input[name="q2"]:checked');
+  if(!selected) return;
+  const correct = (selected.value === 'b');
+  questionResults[2] = correct;
+  if(correct) finalScore++;
+  advance(3);
+}
+
+const WORDLE_ANS = "LEMON";
+let wRow=0, wCol=0, wGrid=[], wFinished=false, wLocked=false, keyStates={};
+const fallbackWords = "APPLE WATER GHOST TRAIN HOUSE MOUSE SMILE LIGHT HEART PIZZA BEACH DREAM MONEY WORLD MUSIC PLANT SPACE RIVER NIGHT STARS SUGAR FLOUR BREAD GRAPE BERRY MANGO MELON JUICE SWEET CANDY CAKES PARTY HAPPY GAMES FUNNY LAUGH SMILE LEMON CHAIR TABLE CLOCK TIGER TOWER".split(" ");
+
+function initWordle(){
+  const board = document.getElementById('wordle-board');
+  board.innerHTML='';
+  wRow=0; wCol=0; wGrid=Array(6).fill().map(()=>Array(5).fill('')); wFinished=false; wLocked=false; keyStates={};
+  for(let r=0;r<6;r++){
+    const rowDiv = document.createElement('div');
+    rowDiv.className='wordle-row'; rowDiv.id=`w-row-${r}`;
+    for(let c=0;c<5;c++){
+      const tile=document.createElement('div');
+      tile.className='wordle-tile'; tile.id=`w-tile-${r}-${c}`;
+      tile.style.background='var(--surface)'; tile.style.borderColor='var(--w-border)'; tile.style.color='var(--text)';
+      rowDiv.appendChild(tile);
+    }
+    board.appendChild(rowDiv);
+  }
+  const kb=document.getElementById('wordle-keyboard');
+  kb.innerHTML='';
+  const layout=["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"];
+  layout.forEach((row,rIdx)=>{
+    const rDiv=document.createElement('div'); rDiv.className='keyboard-row';
+    if(rIdx===2) rDiv.innerHTML+=`<button class="key key-large" onclick="handleWKey('ENTER')">ENTER</button>`;
+    row.split('').forEach(ch=>{ rDiv.innerHTML+=`<button class="key" id="key-${ch}" onclick="handleWKey('${ch}')">${ch}</button>`; });
+    if(rIdx===2) rDiv.innerHTML+=`<button class="key key-large" onclick="handleWKey('BACKSPACE')"><i class="fas fa-delete-left"></i></button>`;
+    kb.appendChild(rDiv);
+  });
+  document.removeEventListener('keydown', wordleKeydown);
+  document.addEventListener('keydown', wordleKeydown);
+  document.getElementById('btn-w-next').style.display='none';
+}
+function wordleKeydown(e){
+  if(!document.getElementById('screen-3').classList.contains('active')) return;
+  const key=e.key.toUpperCase();
+  if(key==='ENTER'||key==='BACKSPACE'||/^[A-Z]$/.test(key)) handleWKey(key);
+}
+async function handleWKey(key){
+  if(wFinished || wLocked) return;
+  if(key==='BACKSPACE' && wCol>0){
+    wCol--; wGrid[wRow][wCol]='';
+    const tile=document.getElementById(`w-tile-${wRow}-${wCol}`);
+    tile.innerText=''; tile.classList.remove('filled');
+  } else if(key==='ENTER' && wCol===5){
+    const guess = wGrid[wRow].join('');
+    let isValid = fallbackWords.includes(guess);
+    if(!isValid){
+      try{
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${guess.toLowerCase()}`);
+        isValid = res.ok;
+      } catch(e){ isValid = true; }
+    }
+    if(!isValid){
+      showToast("Not in word list");
+      const rowEl=document.getElementById(`w-row-${wRow}`);
+      rowEl.classList.remove('shake'); void rowEl.offsetWidth; rowEl.classList.add('shake');
+      return;
+    }
+    checkWordleRow(guess);
+  } else if(/^[A-Z]$/.test(key) && wCol<5){
+    wGrid[wRow][wCol]=key;
+    const tile=document.getElementById(`w-tile-${wRow}-${wCol}`);
+    tile.classList.remove('filled');
+    void tile.offsetWidth;
+    tile.innerText=key; tile.classList.add('filled');
+    wCol++;
+  }
+}
+function checkWordleRow(guess){
+  wLocked = true;
+  let ansArr = WORDLE_ANS.split('');
+  let correctCount=0;
+  const states=[], tiles=[];
+  for(let i=0;i<5;i++){
+    if(guess[i]===ansArr[i]){ states[i]='correct'; ansArr[i]=null; correctCount++; }
+  }
+  for(let i=0;i<5;i++){
+    if(!states[i]){
+      if(ansArr.includes(guess[i])){ states[i]='present'; ansArr[ansArr.indexOf(guess[i])]=null; }
+      else states[i]='absent';
+    }
+    tiles.push(document.getElementById(`w-tile-${wRow}-${i}`));
+  }
+  const rank = {absent:0, present:1, correct:2};
+  tiles.forEach((tile,i)=>{
+    setTimeout(()=>{
+      tile.classList.add('flip');
+      setTimeout(()=>{
+        tile.style.backgroundColor = `var(--w-${states[i]})`;
+        tile.style.borderColor = `var(--w-${states[i]})`;
+        tile.style.color = '#fff';
+        const letter = guess[i];
+        const prevRank = keyStates[letter] ? rank[keyStates[letter]] : -1;
+        if(rank[states[i]] > prevRank){
+          keyStates[letter] = states[i];
+          const kbKey = document.getElementById(`key-${letter}`);
+          if(kbKey){ kbKey.style.backgroundColor = `var(--w-${states[i]})`; kbKey.style.color = '#fff'; }
+        }
+      }, 200);
+    }, i*250);
+  });
+  setTimeout(()=>{
+    wLocked = false;
+    if(correctCount===5){
+      wFinished=true; finalScore++;
+      questionResults[3] = true;
+      showToast("Genius!");
+      tiles.forEach((tile,i)=>setTimeout(()=>tile.classList.add('bounce'), i*80));
+      document.getElementById('btn-w-next').style.display='inline-flex';
+    } else if(wRow===5){
+      wFinished=true;
+      questionResults[3] = false;
+      showToast(WORDLE_ANS);
+      document.getElementById('btn-w-next').style.display='inline-flex';
+    } else {
+      wRow++; wCol=0;
+    }
+  }, 5*250+300);
+}
+
+const cwAns=[
+  ['F','E','E','L',null],
+  ['E','L','V','E','S'],
+  ['A','B','O','V','E'],
+  ['T','O','K','E','N'],
+  [null,'W','E','E','D']
+];
+const CW_BLOCKED = new Set(['0,4','4,0']);
+const cwNums={"0,0":1,"0,1":2,"0,2":3,"0,3":4,"1,0":5,"1,4":6,"2,0":7,"3,0":8,"4,1":9};
+let cwChecked = false;
+function isCwBlocked(r,c){ return CW_BLOCKED.has(`${r},${c}`); }
+function buildCrosswordGrid(){
+  const grid = document.getElementById('cw-grid');
+  grid.innerHTML='';
+  for(let r=0;r<5;r++){
+    for(let c=0;c<5;c++){
+      const cell=document.createElement('div');
+      cell.id=`cw-cell-${r}-${c}`;
+      if(isCwBlocked(r,c)){
+        cell.className='cw-cell blocked';
+      } else {
+        cell.className='cw-cell';
+        const num = cwNums[`${r},${c}`];
+        cell.innerHTML = (num?`<span class="cw-num">${num}</span>`:'') + `<input type="text" maxlength="1" data-pos="${r},${c}" oninput="cwInput(this)" onkeydown="cwNav(event,this)">`;
+      }
+      grid.appendChild(cell);
+    }
+  }
+  cwChecked = false;
+  document.getElementById('cw-check-btn').disabled = false;
+  document.getElementById('cw-check-btn').innerText = 'Check puzzle (one-time use)';
+  document.getElementById('cw-submit-btn').disabled = true;
+}
+function cwInput(el){
+  document.querySelectorAll('.cw-cell').forEach(c=>c.classList.remove('correct-cell','incorrect-cell'));
+  if(el.value.length===1){
+    const [r,c] = el.getAttribute('data-pos').split(',').map(Number);
+    if(c+1<5 && !isCwBlocked(r,c+1)){
+      const next = document.querySelector(`.cw-cell input[data-pos="${r},${c+1}"]`);
+      if(next) next.focus();
+    }
+  }
+  checkCwFull();
+}
+function checkCwFull(){
+  const inputs = document.querySelectorAll('.cw-cell input');
+  const full = Array.from(inputs).every(i=>i.value.trim().length===1);
+  document.getElementById('cw-submit-btn').disabled = !full;
+}
+function cwFocusCell(r,c){
+  const target = document.querySelector(`.cw-cell input[data-pos="${r},${c}"]`);
+  if(target) target.focus();
+}
+function cwNav(e, el){
+  const [r,c] = el.getAttribute('data-pos').split(',').map(Number);
+  let nr=r, nc=c;
+  if(e.key==='ArrowRight') nc=c+1;
+  else if(e.key==='ArrowLeft') nc=c-1;
+  else if(e.key==='ArrowDown') nr=r+1;
+  else if(e.key==='ArrowUp') nr=r-1;
+  else if(e.key==='Backspace' && el.value===''){
+    nc=c-1;
+    if(nc<0){ nr=r-1; nc=4; }
+  }
+  else return;
+  if(nr<0||nr>4||nc<0||nc>4) return;
+  if(isCwBlocked(nr,nc)) return;
+  cwFocusCell(nr,nc);
+}
+function autoCheckCrossword(){
+  if(cwChecked) return;
+  cwChecked = true;
+  document.getElementById('cw-check-btn').disabled = true;
+  document.getElementById('cw-check-btn').innerText = 'Already used';
+  document.querySelectorAll('.cw-cell input').forEach(input=>{
+    const [r,c] = input.getAttribute('data-pos').split(',');
+    const cell = input.parentElement;
+    if(input.value.trim()===''){ return; }
+    if(input.value.toUpperCase() === cwAns[r][c]) cell.classList.add('correct-cell');
+    else cell.classList.add('incorrect-cell');
+  });
+}
+function submitQ4(){
+  const inputs = document.querySelectorAll('.cw-cell input');
+  let isCorrect = true;
+  inputs.forEach(input=>{
+    const [r,c] = input.getAttribute('data-pos').split(',');
+    if(input.value.toUpperCase() !== cwAns[r][c]) isCorrect = false;
+  });
+  questionResults[4] = isCorrect;
+  if(isCorrect) finalScore++;
+  advance(5);
+}
+
+const BEE_CENTER = "R";
+const BEE_OUTER = ["G","A","N","I","T","E"];
+const BEE_PANGRAM = "GRANITE";
+const BEE_VALID_WORDS = new Set(["GRAIN","GRATE","GRANT","TRAIN","RATING","GARNET","TARN","RANT","GRATIN","NITRATE","GRANITE"]);
+let beeCurrentWord = "", beeFoundWords = [], beeOuterOrder = [], beePassed = false, beeChecking = false;
+
+function beeAllLetters(){ return [BEE_CENTER, ...BEE_OUTER]; }
+
+function initBee(){
+  beeCurrentWord = "";
+  beeFoundWords = [];
+  beePassed = false;
+  beeChecking = false;
+  beeOuterOrder = [...BEE_OUTER];
+  document.getElementById('btn-bee-next').style.display='none';
+  renderBeeCurrent();
+  renderBeeFound();
+  buildBeeHive();
+  document.removeEventListener('keydown', beeKeydown);
+  document.addEventListener('keydown', beeKeydown);
+}
+function buildBeeHive(){
+  const hive = document.getElementById('bee-hive');
+  hive.innerHTML='';
+  const size = hive.clientWidth || 240;
+  const hexW = size * 0.3;
+  const hexH = hexW * 1.16;
+  const cx = size/2, cy = size/2;
+  const radius = size * 0.34;
+  const fontSize = Math.max(15, hexW * 0.34);
+
+  const centerHex = document.createElement('button');
+  centerHex.className='hex center-hex';
+  centerHex.innerText = BEE_CENTER;
+  centerHex.style.width = hexW+'px';
+  centerHex.style.height = hexH+'px';
+  centerHex.style.left = (cx - hexW/2)+'px';
+  centerHex.style.top = (cy - hexH/2)+'px';
+  centerHex.style.fontSize = fontSize+'px';
+  centerHex.onclick = ()=>beeTypeLetter(BEE_CENTER);
+  hive.appendChild(centerHex);
+
+  beeOuterOrder.forEach((letter, i)=>{
+    const angle = (Math.PI/180) * (60*i - 90);
+    const x = cx + radius*Math.cos(angle) - hexW/2;
+    const y = cy + radius*Math.sin(angle) - hexH/2;
+    const hex = document.createElement('button');
+    hex.className='hex';
+    hex.innerText = letter;
+    hex.style.width = hexW+'px';
+    hex.style.height = hexH+'px';
+    hex.style.left = x+'px';
+    hex.style.top = y+'px';
+    hex.style.fontSize = fontSize+'px';
+    hex.onclick = ()=>beeTypeLetter(letter);
+    hive.appendChild(hex);
+  });
+}
+function renderBeeCurrent(){
+  const el = document.getElementById('bee-current');
+  if(!beeCurrentWord){ el.innerHTML='&nbsp;'; return; }
+  const allLetters = beeAllLetters();
+  el.innerHTML = beeCurrentWord.split('').map(ch=>{
+    if(ch===BEE_CENTER) return `<span class="center-letter">${ch}</span>`;
+    if(!allLetters.includes(ch)) return `<span class="invalid-letter">${ch}</span>`;
+    return ch;
+  }).join('');
+}
+function renderBeeFound(){
+  document.getElementById('bee-status').innerText = `${beeFoundWords.length} word${beeFoundWords.length===1?'':'s'} found`;
+  const list = document.getElementById('bee-found-list');
+  list.innerHTML = beeFoundWords.map(w=>{
+    const cls = w===BEE_PANGRAM ? 'bee-found-word pangram' : 'bee-found-word';
+    return `<div class="${cls}">${w}</div>`;
+  }).join('');
+}
+function beeTypeLetter(letter){
+  if(beePassed || beeChecking) return;
+  beeCurrentWord += letter;
+  renderBeeCurrent();
+}
+function beeDelete(){
+  if(beePassed || beeChecking) return;
+  beeCurrentWord = beeCurrentWord.slice(0,-1);
+  renderBeeCurrent();
+}
+function beeShuffle(){
+  beeOuterOrder = beeOuterOrder.sort(()=>Math.random()-0.5);
+  buildBeeHive();
+}
+function beeKeydown(e){
+  if(!document.getElementById('screen-5').classList.contains('active')) return;
+  if(beePassed || beeChecking) return;
+  const key = e.key.toUpperCase();
+  if(key==='ENTER'){ beeSubmit(); return; }
+  if(key==='BACKSPACE'){ beeDelete(); return; }
+  if(/^[A-Z]$/.test(key)){ beeTypeLetter(key); }
+}
+async function beeSubmit(){
+  if(beePassed || beeChecking) return;
+  const word = beeCurrentWord.toUpperCase();
+  const allLetters = beeAllLetters();
+  if(word.length < 4){ showToast("Too short"); beeCurrentWord=''; renderBeeCurrent(); return; }
+  if(!word.includes(BEE_CENTER)){ showToast(`Must contain the center letter ${BEE_CENTER}`); beeCurrentWord=''; renderBeeCurrent(); return; }
+  const usesOnlyAllowed = word.split('').every(ch=>allLetters.includes(ch));
+  if(!usesOnlyAllowed){ showToast("Uses letters outside the hive"); beeCurrentWord=''; renderBeeCurrent(); return; }
+  if(beeFoundWords.includes(word)){ showToast("Already found that word"); beeCurrentWord=''; renderBeeCurrent(); return; }
+
+  let isValidWord = BEE_VALID_WORDS.has(word);
+  if(!isValidWord){
+    beeChecking = true;
+    try{
+      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`);
+      isValidWord = res.ok;
+    } catch(e){
+      isValidWord = false;
+    }
+    beeChecking = false;
+  }
+  if(!isValidWord){ showToast("Not in word list"); beeCurrentWord=''; renderBeeCurrent(); return; }
+
+  beeFoundWords.push(word);
+  beeCurrentWord='';
+  renderBeeCurrent();
+  renderBeeFound();
+  if(word === BEE_PANGRAM){
+    beePassed = true;
+    finalScore++;
+    questionResults[5] = true;
+    showToast("Pangram! You passed!");
+    document.getElementById('btn-bee-next').style.display='inline-flex';
+  } else {
+    showToast("Nice find!");
+  }
+}
+
+const cCats = [
+  { name:"THINGS YOU BLOW", color:"var(--c-yellow)", words:["CANDLES","WHISTLE","KISS","HORN"] },
+  { name:"___ CAKE", color:"var(--c-green)", words:["CUP","PAN","FRUIT","SHORT"] },
+  { name:"NUMBER HOMOPHONES", color:"var(--c-blue)", words:["WON","TOO","ATE","FORE"] },
+  { name:'WORDS BEFORE "HAT"', color:"var(--c-purple)", words:["PARTY","TOP","HARD","WITCH"] }
+];
+let cTiles=[], cSelected=[], cMistakes=4, cGroupsFound=0, cPreviousGuesses=[];
+function initConnections(){
+  cTiles = cCats.flatMap(c=>c.words).sort(()=>Math.random()-0.5);
+  cSelected=[]; cMistakes=4; cGroupsFound=0; cPreviousGuesses=[];
+  document.getElementById('conn-groups').innerHTML='';
+  document.getElementById('conn-actions').style.display='flex';
+  document.getElementById('btn-c-next').style.display='none';
+  document.querySelectorAll('.mistake-dot').forEach(d=>d.classList.remove('lost'));
+  renderConnTiles();
+}
+function renderConnTiles(){
+  const tilesEl = document.getElementById('conn-tiles');
+  tilesEl.innerHTML='';
+  cTiles.forEach(word=>{
+    const btn=document.createElement('button');
+    btn.className='conn-tile'; btn.innerText=word;
+    if(cSelected.includes(word)) btn.classList.add('selected');
+    btn.onclick=()=>toggleConn(word);
+    tilesEl.appendChild(btn);
+  });
+  updateConnSubmitBtn();
+}
+function toggleConn(word){
+  if(cSelected.includes(word)) cSelected = cSelected.filter(w=>w!==word);
+  else if(cSelected.length<4) cSelected.push(word);
+  renderConnTiles();
+}
+function shuffleConn(){ cTiles = cTiles.sort(()=>Math.random()-0.5); renderConnTiles(); }
+function updateConnSubmitBtn(){
+  document.getElementById('conn-submit').classList.toggle('active', cSelected.length===4);
+}
+function submitConnSelection(){
+  if(cSelected.length!==4) return;
+  const sortedKey=[...cSelected].sort().join(',');
+  if(cPreviousGuesses.includes(sortedKey)){ showToast("You've already guessed that combination!"); return; }
+  cPreviousGuesses.push(sortedKey);
+  let matchedCat=null, maxOverlap=0;
+  cCats.forEach(cat=>{
+    const overlap = cSelected.filter(w=>cat.words.includes(w)).length;
+    if(overlap===4) matchedCat=cat;
+    if(overlap>maxOverlap) maxOverlap=overlap;
+  });
+  if(matchedCat){
+    cTiles = cTiles.filter(w=>!cSelected.includes(w));
+    cSelected=[]; cGroupsFound++;
+    const groupsEl = document.getElementById('conn-groups');
+    const groupDiv = document.createElement('div');
+    groupDiv.className='conn-group reveal';
+    groupDiv.style.backgroundColor = matchedCat.color;
+    groupDiv.innerHTML = `<h3>${matchedCat.name}</h3><p>${matchedCat.words.join(', ')}</p>`;
+    groupsEl.appendChild(groupDiv);
+    renderConnTiles();
+    if(cGroupsFound===4){
+      finalScore++;
+      questionResults[6] = true;
+      document.getElementById('conn-actions').style.display='none';
+      document.getElementById('btn-c-next').style.display='inline-flex';
+      showToast("Perfect!");
+    }
+  } else {
+    cMistakes--;
+    document.querySelectorAll('.mistake-dot')[3-cMistakes].classList.add('lost');
+    const tiles = document.querySelectorAll('.conn-tile.selected');
+    tiles.forEach(t=>t.classList.add('shake'));
+    setTimeout(()=>tiles.forEach(t=>t.classList.remove('shake')), 500);
+    if(maxOverlap===3) showToast("One away...");
+    if(cMistakes===0){
+      questionResults[6] = false;
+      setTimeout(()=>{
+        showToast("Out of guesses!");
+        document.getElementById('conn-actions').style.display='none';
+        document.getElementById('btn-c-next').style.display='inline-flex';
+      }, 1000);
+    }
+  }
+}
+
+let countryFeatures = [], countryNames = [], worldDataLoaded = false;
+let targetCountry = null, seenCountryNames = [], swapsLeft = 2;
+const countryBlacklist = ['antarctica','fr. s.','seven seas','somaliland'];
+
+async function loadWorldData(){
+  if(worldDataLoaded) return;
+  const topology = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json').then(r=>r.json());
+  const features = topojson.feature(topology, topology.objects.countries).features;
+  countryFeatures = features.filter(f=>{
+    const n = (f.properties && f.properties.name) ? f.properties.name.toLowerCase() : '';
+    return n && !countryBlacklist.some(b=>n.includes(b));
+  });
+  countryNames = countryFeatures.map(f=>f.properties.name).sort();
+  worldDataLoaded = true;
+}
+function renderSilhouette(feature){
+  const width=300, height=220;
+  const projection = d3.geoIdentity().reflectY(true).fitSize([width-24, height-24], feature);
+  const path = d3.geoPath(projection);
+  const d = path(feature);
+  document.getElementById('country-silhouette').innerHTML = `<svg viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg"><path d="${d}" transform="translate(12,12)"/></svg>`;
+}
+function pickRandomCountry(exclude){
+  const pool = countryFeatures.filter(f=>!exclude.includes(f.properties.name));
+  if(pool.length===0) return countryFeatures[Math.floor(Math.random()*countryFeatures.length)];
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+async function initCountryGame(){
+  document.getElementById('country-input').value='';
+  swapsLeft = 2;
+  document.getElementById('swaps-left').innerText = swapsLeft;
+  await loadWorldData();
+  targetCountry = pickRandomCountry([]);
+  seenCountryNames = [targetCountry.properties.name];
+  renderSilhouette(targetCountry);
+}
+function swapCountry(){
+  if(swapsLeft<=0) return showToast("No swaps remaining.");
+  swapsLeft--;
+  document.getElementById('swaps-left').innerText = swapsLeft;
+  targetCountry = pickRandomCountry(seenCountryNames);
+  seenCountryNames.push(targetCountry.properties.name);
+  document.getElementById('country-input').value='';
+  renderSilhouette(targetCountry);
+  closeCountryAutocomplete();
+}
+
+let countryAcActiveIndex = -1;
+function onCountryInput(){
+  const val = document.getElementById('country-input').value.trim().toLowerCase();
+  const listEl = document.getElementById('country-autocomplete');
+  countryAcActiveIndex = -1;
+  if(!val){ closeCountryAutocomplete(); return; }
+  if(!worldDataLoaded){ listEl.innerHTML = `<div class="autocomplete-empty">Loading countries...</div>`; listEl.classList.add('open'); return; }
+  const matches = countryNames.filter(n=>n.toLowerCase().includes(val)).slice(0,50);
+  if(matches.length===0){
+    listEl.innerHTML = `<div class="autocomplete-empty">No matches</div>`;
+  } else {
+    listEl.innerHTML = matches.map(n=>`<div class="autocomplete-item" onclick="selectCountryOption('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
+  }
+  listEl.classList.add('open');
+}
+function selectCountryOption(name){
+  document.getElementById('country-input').value = name;
+  closeCountryAutocomplete();
+}
+function closeCountryAutocomplete(){
+  const listEl = document.getElementById('country-autocomplete');
+  listEl.classList.remove('open');
+  listEl.innerHTML='';
+}
+document.addEventListener('click', (e)=>{
+  const wrap = document.querySelector('#screen-7 .autocomplete-wrap');
+  if(wrap && !wrap.contains(e.target)) closeCountryAutocomplete();
+});
+
+function submitCountry(){
+  const val = document.getElementById('country-input').value.trim().toLowerCase();
+  if(!val) return showToast("Please enter a country name.");
+  const match = countryNames.find(n=>n.toLowerCase()===val);
+  if(!match) return showToast("That's not a recognized country name.");
+  const correct = (match.toLowerCase() === targetCountry.properties.name.toLowerCase());
+  questionResults[7] = correct;
+  if(correct) finalScore++;
+  advance(8);
+}
+
+function levenshtein(a, b){
+  a = a.toLowerCase(); b = b.toLowerCase();
+  const m = a.length, n = b.length;
+  if(m===0) return n;
+  if(n===0) return m;
+  const dp = Array.from({length:m+1}, ()=>new Array(n+1).fill(0));
+  for(let i=0;i<=m;i++) dp[i][0]=i;
+  for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++){
+    for(let j=1;j<=n;j++){
+      dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+    }
+  }
+  return dp[m][n];
+}
+function normalizeName(s){
+  return s.trim().toLowerCase().replace(/[^a-z\s]/g,'').replace(/\s+/g,' ');
+}
+function isCloseMatch(typed, actual){
+  const t = normalizeName(typed), a = normalizeName(actual);
+  if(t === a) return true;
+  const dist = levenshtein(t, a);
+  const threshold = Math.max(1, Math.min(3, Math.floor(a.length / 6)));
+  return dist <= threshold;
+}
+
+const LGBTQ_ORIENTATIONS = new Set(['Q6636','Q592','Q43501','Q3241108','Q1439046']);
+const LGBTQ_GENDERS = new Set(['Q1052281','Q2449503','Q48270','Q12964198','Q1097630']);
+const peopleState = {
+  women: { list:[], gender:'Q6581072', limit:12, mode:'gender' },
+  men:   { list:[], gender:'Q6581097', limit:12, mode:'gender' },
+  pride: { list:[], limit:21, mode:'lgbtq' }
+};
+function initPeopleGame(type){
+  peopleState[type].list = [];
+  document.getElementById(`${type}-input`).value='';
+  buildPeopleGrid(type);
+  updatePeopleCountUI(type);
+}
+function buildPeopleGrid(type){
+  const state = peopleState[type];
+  const grid = document.getElementById(`${type}-grid`);
+  grid.innerHTML='';
+  for(let i=0;i<state.limit;i++){
+    const tile = document.createElement('div');
+    tile.className = 'people-tile';
+    tile.id = `${type}-tile-${i}`;
+    tile.innerText = i+1;
+    grid.appendChild(tile);
+  }
+}
+function fillPeopleTile(type, index, name){
+  const tile = document.getElementById(`${type}-tile-${index}`);
+  if(!tile) return;
+  tile.innerText = name;
+  tile.classList.add('filled');
+}
+function updatePeopleCountUI(type){
+  const state = peopleState[type];
+  document.getElementById(`${type}-count`).innerText = state.list.length;
+  document.getElementById(`${type}-next-btn`).disabled = state.list.length < state.limit;
+}
+async function validatePerson(typedName, state){
+  try{
+    const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(typedName)}&format=json&origin=*`).then(r=>r.json());
+    if(!searchRes.query || !searchRes.query.search.length) return {valid:false, reason:"No Wikipedia article found for that name."};
+    const title = searchRes.query.search[0].title;
+    if(!isCloseMatch(typedName, title)){
+      return {valid:false, reason:"That doesn't look close enough to a known name, check your spelling."};
+    }
+    const propsRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageprops&format=json&origin=*`).then(r=>r.json());
+    const page = Object.values(propsRes.query.pages)[0];
+    if(!page.pageprops || !page.pageprops.wikibase_item) return {valid:false, reason:"Couldn't verify that person's data."};
+    const qid = page.pageprops.wikibase_item;
+    const entityRes = await fetch(`https://www.wikidata.org/wiki/Special:EntityData/${qid}.json`).then(r=>r.json());
+    const entity = entityRes.entities[qid];
+    const claims = entity.claims || {};
+    const isHuman = claims.P31 && claims.P31.some(c=>c.mainsnak.datavalue && c.mainsnak.datavalue.value.id==='Q5');
+    if(!isHuman) return {valid:false, reason:"That doesn't appear to be a real person."};
+    if(state.mode==='gender'){
+      const genderVal = claims.P21 && claims.P21[0] && claims.P21[0].mainsnak.datavalue && claims.P21[0].mainsnak.datavalue.value.id;
+      if(genderVal !== state.gender) return {valid:false, reason:"That person doesn't match this category."};
+    } else if(state.mode==='lgbtq'){
+      const orientationVals = (claims.P91 || []).map(c=>c.mainsnak.datavalue && c.mainsnak.datavalue.value && c.mainsnak.datavalue.value.id).filter(Boolean);
+      const genderVals = (claims.P21 || []).map(c=>c.mainsnak.datavalue && c.mainsnak.datavalue.value && c.mainsnak.datavalue.value.id).filter(Boolean);
+      const matchesOrientation = orientationVals.some(v=>LGBTQ_ORIENTATIONS.has(v));
+      const matchesGender = genderVals.some(v=>LGBTQ_GENDERS.has(v));
+      if(!matchesOrientation && !matchesGender) return {valid:false, reason:"No documented LGBTQ+ orientation or gender identity found for that person."};
+    }
+    const canonicalName = (entity.labels && entity.labels.en) ? entity.labels.en.value : title;
+    if(!isCloseMatch(typedName, canonicalName) && !isCloseMatch(typedName, title)){
+      return {valid:false, reason:"That doesn't look close enough to a known name, check your spelling."};
+    }
+    return {valid:true, canonicalName};
+  } catch(e){
+    return {valid:false, reason:"Couldn't verify right now, check your connection and try again."};
+  }
+}
+function submitPeopleQuestion(type, questionNum, nextScreen){
+  questionResults[questionNum] = true;
+  advance(nextScreen);
+}
+async function addPerson(type){
+  const input = document.getElementById(`${type}-input`);
+  const btn = document.getElementById(`${type}-add-btn`);
+  const name = input.value.trim();
+  if(!name) return;
+  const state = peopleState[type];
+  if(state.list.length >= state.limit) return showToast(`You've already named ${state.limit}!`);
+  btn.disabled = true; btn.innerText = 'Checking...';
+  const result = await validatePerson(name, state);
+  btn.disabled = false; btn.innerText = 'Add';
+  if(!result.valid){ showToast(result.reason); return; }
+  if(state.list.some(n=>isCloseMatch(n, result.canonicalName))){
+    showToast("You've already named that person.");
+    return;
+  }
+  const newIndex = state.list.length;
+  state.list.push(result.canonicalName);
+  input.value='';
+  fillPeopleTile(type, newIndex, result.canonicalName);
+  updatePeopleCountUI(type);
+  if(state.list.length >= state.limit) showToast(`All ${state.limit} named!`);
+}
+
+function buildResults(){
+  document.getElementById('cert-name').innerText = playerName;
+  document.getElementById('cert-score').innerText = `${finalScore}/${TOTAL_QUESTIONS}`;
+  document.getElementById('cert-time').innerText = `Time: ${formatTime(stopwatchElapsedMs)}`;
+  const breakdown = document.getElementById('cert-breakdown');
+  breakdown.innerHTML = '';
+  for(let n=1;n<=TOTAL_QUESTIONS;n++){
+    const result = questionResults[n];
+    const cls = result===true ? 'correct' : (result===false ? 'incorrect' : 'unknown');
+    const icon = result===true ? 'fa-circle-check' : (result===false ? 'fa-circle-xmark' : 'fa-circle-question');
+    const row = document.createElement('div');
+    row.className = `cert-breakdown-item ${cls}`;
+    row.innerHTML = `<i class="fas ${icon}"></i><span>Q${n}: ${QUESTION_TITLES[n]}</span>`;
+    breakdown.appendChild(row);
+  }
+}
+function downloadCertificate(){
+  const cert = document.getElementById('certificate');
+  html2canvas(cert, {scale:2, backgroundColor:null}).then(canvas=>{
+    const link = document.createElement('a');
+    link.download = `${playerName}_Quiz_Certificate.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+</script>
+</body>
+</html>
