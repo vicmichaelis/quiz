@@ -221,7 +221,7 @@ button{font-family:var(--font);}
   position:absolute; clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   background:var(--bee-fill); border:none; display:flex; align-items:center; justify-content:center;
   font-weight:800; text-transform:uppercase; cursor:pointer; color:var(--bee-text);
-  transition:transform .12s var(--ease), background .2s var(--ease);
+  transition:transform .12s var(--ease), background .2s var(--ease); filter:drop-shadow(0 2px 3px rgba(0,0,0,.16));
 }
 .hex:hover{transform:scale(1.05);}
 .hex:active{transform:scale(.93);}
@@ -271,6 +271,53 @@ button{font-family:var(--font);}
 .people-input-row button:hover:not(:disabled){opacity:.85;}
 .people-input-row button:disabled{opacity:.5; cursor:default;}
 .people-count{text-align:center; font-size:.8rem; color:var(--text-muted); margin-bottom:8px;}
+
+.petal-header{display:flex; gap:16px; align-items:center; background:linear-gradient(160deg,#1a1a1a,#2b2b2b); border-radius:12px; padding:18px; color:#fff;}
+.petal-cover{
+  width:88px; height:88px; flex-shrink:0; border-radius:8px; overflow:hidden;
+  background:linear-gradient(135deg,#e9c9d6,#c98aa8 45%,#6a3350); box-shadow:0 6px 18px rgba(0,0,0,.35);
+  display:flex; align-items:center; justify-content:center; font-size:2rem; color:rgba(255,255,255,.85);
+}
+.petal-cover img{width:100%; height:100%; object-fit:cover; display:block;}
+.petal-meta{display:flex; flex-direction:column; gap:3px; min-width:0;}
+.petal-eyebrow{font-size:.68rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#b3b3b3;}
+.petal-title{font-size:2rem; font-weight:800; color:#fff; line-height:1.05; letter-spacing:-.02em; text-align:left;}
+.petal-artist{display:flex; align-items:center; gap:6px; font-size:.85rem; font-weight:600; color:#fff; margin-top:2px;}
+.petal-artist-badge{width:18px; height:18px; border-radius:50%; background:#1DB954; color:#000; font-size:.6rem; font-weight:800; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;}
+.petal-artist-badge img{width:100%; height:100%; object-fit:cover; display:block;}
+.petal-sub{font-size:.78rem; color:#b3b3b3; margin-top:2px;}
+.petal-progress-row{display:flex; align-items:center; gap:10px; margin:14px 0;}
+.petal-progress-track{flex:1; height:6px; border-radius:4px; background:var(--border); overflow:hidden;}
+.petal-progress-fill{height:100%; width:0%; background:#1DB954; border-radius:4px; transition:width .3s var(--ease);}
+#petal-progress-label{font-size:.75rem; font-weight:700; color:var(--text-muted); white-space:nowrap;}
+.petal-tracklist{display:flex; flex-direction:column; margin-bottom:8px; border-radius:8px; overflow:hidden; border:1px solid var(--border);}
+.petal-track-row{
+  display:flex; align-items:center; gap:12px; padding:10px 14px; font-size:.85rem;
+  background:var(--surface); border-bottom:1px solid var(--border); transition:background .3s ease;
+}
+.petal-track-row:last-child{border-bottom:none;}
+.petal-track-num{width:16px; text-align:center; color:var(--text-muted); font-size:.78rem; flex-shrink:0;}
+.petal-track-icon{width:14px; text-align:center; color:var(--text-muted); flex-shrink:0;}
+.petal-track-title{flex:1; color:var(--text-muted); font-weight:500;}
+.petal-track-dur{font-size:.75rem; color:var(--text-muted); flex-shrink:0;}
+.petal-track-row.found{background:var(--accent-soft);}
+.petal-track-row.found .petal-track-title{color:var(--text); font-weight:700;}
+.petal-track-row.found .petal-track-icon{color:#1DB954;}
+.petal-track-row.found .petal-track-num{color:#1DB954;}
+@keyframes petalReveal{
+  0%{transform:scale(.94) translateX(-6px); opacity:.3; background:var(--accent-soft);}
+  55%{transform:scale(1.015) translateX(0); opacity:1;}
+  100%{transform:scale(1); opacity:1;}
+}
+.petal-track-row.petal-pop{animation:petalReveal .45s var(--ease);}
+
+.runaway-zone{position:relative; width:100%; height:320px; border:1.5px dashed var(--border); border-radius:12px; overflow:hidden; background:var(--bg);}
+.runaway-btn{
+  position:absolute; top:calc(50% - 24px); left:calc(50% - 70px);
+  background:var(--text); color:var(--bg); border:none; padding:13px 20px; border-radius:8px;
+  font-size:.95rem; font-weight:600; cursor:pointer; transition:top .22s var(--ease), left .22s var(--ease);
+}
+.runaway-btn:focus-visible{outline:3px solid var(--accent); outline-offset:2px;}
 
 #certificate{background:var(--surface); padding:32px; text-align:center; border-radius:12px; border:1px solid var(--border); position:relative; margin-bottom:14px;}
 #certificate h1{font-size:1.7rem;}
@@ -373,7 +420,7 @@ button{font-family:var(--font);}
 <div id="toast">Message here</div>
 
 <div class="progress-hud hidden" id="progress-hud">
-  <div class="progress-pill" id="progress-pill">Q1 / 10</div>
+  <div class="progress-pill" id="progress-pill">Q1 / 12</div>
   <div class="stopwatch-pill"><i class="fas fa-stopwatch"></i><span id="stopwatch-display">00:00</span></div>
 </div>
 
@@ -574,17 +621,53 @@ button{font-family:var(--font);}
 
   <div id="screen-10" class="screen">
     <h2>Pride Month is Every Month! <button class="help-btn" onclick="showPeopleHelp()">?</button></h2>
-    <p class="subtitle">Name 21 LGBTQ+ people.</p>
-    <div class="people-count"><span id="pride-count">0</span> / 21</div>
+    <p class="subtitle">Name 15 LGBTQ+ people.</p>
+    <div class="people-count"><span id="pride-count">0</span> / 15</div>
     <div class="people-input-row">
       <input type="text" id="pride-input" placeholder="Type a name..." onkeydown="if(event.key==='Enter')addPerson('pride')">
       <button onclick="addPerson('pride')" id="pride-add-btn">Add</button>
     </div>
     <div class="people-grid" id="pride-grid"></div>
-    <button class="btn-primary" id="pride-next-btn" disabled onclick="submitPeopleQuestion('pride',10,11)">Finish Quiz <i class="fas fa-flag-checkered"></i></button>
+    <button class="btn-primary" id="pride-next-btn" disabled onclick="submitPeopleQuestion('pride',10,11)">Next Question <i class="fas fa-arrow-right"></i></button>
   </div>
 
   <div id="screen-11" class="screen">
+    <div class="petal-header">
+      <div class="petal-cover">
+        <img src="petal.png" alt="petal album cover">
+      </div>
+      <div class="petal-meta">
+        <span class="petal-eyebrow">Album &middot; 2026</span>
+        <h1 class="petal-title">petal</h1>
+        <div class="petal-artist">
+          <span class="petal-artist-badge"><img src="petal.png" alt="Ariana Grande"></span>
+          <span>Ariana Grande</span>
+        </div>
+        <div class="petal-sub">12 songs</div>
+      </div>
+    </div>
+    <p class="subtitle" style="margin-top:14px;">Pre-save the album, name all 12 tracks to unlock it.</p>
+    <div class="petal-progress-row">
+      <div class="petal-progress-track"><div class="petal-progress-fill" id="petal-progress-fill"></div></div>
+      <span id="petal-progress-label">0 / 12</span>
+    </div>
+    <div class="people-input-row">
+      <input type="text" id="petal-input" placeholder="Type a track name..." autocomplete="off" onkeydown="if(event.key==='Enter')addPetalTrack()">
+      <button onclick="addPetalTrack()" id="petal-add-btn">Add</button>
+    </div>
+    <div class="petal-tracklist" id="petal-tracklist"></div>
+    <button class="btn-primary" id="petal-next-btn" disabled onclick="submitPetalQuestion()">Next Question <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="screen-12" class="screen">
+    <h2>Next Question <button class="help-btn" onclick="showRunawayHelp()">?</button></h2>
+    <p class="subtitle">Simple enough. Press the button.</p>
+    <div class="runaway-zone" id="runaway-zone">
+      <button class="runaway-btn" id="runaway-btn" onclick="handleRunawayClick()">Next Question</button>
+    </div>
+  </div>
+
+  <div id="screen-13" class="screen">
     <div id="certificate">
       <h1>Lemon's Quiz Certificate</h1>
       <p style="color:var(--text-muted); font-size:.95rem; margin-top:8px;">This certifies that</p>
@@ -603,11 +686,11 @@ button{font-family:var(--font);}
 <script>
 let playerName = "";
 let finalScore = 0;
-const TOTAL_QUESTIONS = 10;
+const TOTAL_QUESTIONS = 12;
 let currentScreen = 0;
 const CORRECT_MONTH = 7, CORRECT_DAY = 26;
 const ADMIN_PASSWORD = "vicmichaelisisthebest";
-const QUESTION_SCREEN_MAP = {1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10};
+const QUESTION_SCREEN_MAP = {1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,11:11,12:12};
 const QUESTION_TITLES = {
   1:"Today's the day!",
   2:"It's Basically a 50/50...",
@@ -618,10 +701,12 @@ const QUESTION_TITLES = {
   7:"Name That Country!",
   8:"Prove You Support Women.",
   9:"It's Only Fair For This Question.",
-  10:"Pride Month is Every Month!"
+  10:"Pride Month is Every Month!",
+  11:"Pre-save Petal",
+  12:"Next Question"
 };
 function freshQuestionResults(){
-  return {1:null,2:null,3:null,4:null,5:null,6:null,7:null,8:null,9:null,10:null};
+  return {1:null,2:null,3:null,4:null,5:null,6:null,7:null,8:null,9:null,10:null,11:null,12:null};
 }
 let questionResults = freshQuestionResults();
 
@@ -651,7 +736,7 @@ function updateProgressHud(){
   if(currentScreen>=1 && currentScreen<=TOTAL_QUESTIONS){
     hud.classList.remove('hidden');
     document.getElementById('progress-pill').innerText = `Q${currentScreen} / ${TOTAL_QUESTIONS}`;
-  } else if(currentScreen===11){
+  } else if(currentScreen===13){
     hud.classList.remove('hidden');
     document.getElementById('progress-pill').innerText = `Done!`;
   } else {
@@ -697,7 +782,9 @@ function advance(nextScreenId){
   if(nextScreenId===8) initPeopleGame('women');
   if(nextScreenId===9) initPeopleGame('men');
   if(nextScreenId===10) initPeopleGame('pride');
-  if(nextScreenId===11){ stopStopwatch(); buildResults(); }
+  if(nextScreenId===11) initPetalQuestion();
+  if(nextScreenId===12) initRunawayQuestion();
+  if(nextScreenId===13){ stopStopwatch(); buildResults(); }
 }
 
 function checkInputValidity(inputEl, btnId){
@@ -729,10 +816,10 @@ function closeUtilMenuAnd(fn){
 }
 
 function skipQuestion(){
-  if(currentScreen===0 || currentScreen===11) return showToast("Nothing to skip here.");
+  if(currentScreen===0 || currentScreen===13) return showToast("Nothing to skip here.");
   showConfirm("Skip this question?", "It will be counted as incorrect.", ()=>{
     questionResults[currentScreen] = false;
-    const nextMap = {1:2,2:3,3:4,4:5,5:6,6:7,7:8,8:9,9:10,10:11};
+    const nextMap = {1:2,2:3,3:4,4:5,5:6,6:7,7:8,8:9,9:10,10:11,11:12,12:13};
     const next = nextMap[currentScreen];
     if(next) advance(next);
   });
@@ -782,6 +869,13 @@ function resetAllQuizState(){
     document.getElementById(`${type}-input`).value='';
     document.getElementById(`${type}-grid`).innerHTML='';
   });
+  petalFound = new Array(PETAL_TRACKS.length).fill(false);
+  document.getElementById('petal-input').value='';
+  document.getElementById('petal-tracklist').innerHTML='';
+  document.getElementById('petal-progress-fill').style.width='0%';
+  document.getElementById('petal-progress-label').innerText=`0 / ${PETAL_TRACKS.length}`;
+  document.getElementById('petal-next-btn').disabled = true;
+  runawayClicksToWin = 0;
 }
 
 function openAdminPrompt(){
@@ -824,7 +918,9 @@ function buildAdminAnswers(){
     </div>
     <div class="admin-answer"><strong>Q7 Country (current target):</strong> ${currentTarget}, randomized each playthrough</div>
     <div class="admin-answer"><strong>Q8 / Q9 Name people:</strong> Open-ended, verified live against Wikipedia/Wikidata (must be a real, distinct person of the requested gender with a Wikipedia article).</div>
-    <div class="admin-answer"><strong>Q10 Prove You Support Pride:</strong> Open-ended, verified against Wikidata (must have a documented LGBTQ+ related sexual orientation or gender identity claim).</div>
+    <div class="admin-answer"><strong>Q10 Prove You Support Pride:</strong> Open-ended, verified against Wikidata (must have a documented LGBTQ+ related sexual orientation or gender identity claim, 15 required).</div>
+    <div class="admin-answer"><strong>Q11 Pre-save Petal:</strong> All 12 tracks: kiss me, hate that i made you love me, petal, stay, oh well, big feelings, freak, (warning signs), like i do, never get over me, bad thing (bunny hop), nowhere, nobody.</div>
+    <div class="admin-answer"><strong>Q12 Next Question:</strong> The button only flees from mouse movement, it never reacts to keyboard focus. Press Tab until the button is focused, then hit Enter or Space to activate it.</div>
   `;
   document.getElementById('admin-answers-content').innerHTML = html + `<button class="modal-close" onclick="closeModal('admin-answers-modal')">Close</button>`;
 }
@@ -870,6 +966,14 @@ function showConnHelp(){
       <li>Select four tiles, then hit Submit.</li>
       <li>Find all 4 groups before you run out of mistakes.</li>
       <li>Categories range from straightforward (yellow) to tricky (purple), watch out for red herrings!</li>
+    </ul>`);
+}
+function showRunawayHelp(){
+  showHelp(`<h3>How to Answer This Question</h3>
+    <p>Just press the button. Nothing tricky about it... unless you try to click it with a mouse.</p>
+    <ul>
+      <li>This element is fully keyboard accessible.</li>
+      <li>Not every control on a page needs a mouse to operate it.</li>
     </ul>`);
 }
 function showPeopleHelp(){
@@ -1146,11 +1250,11 @@ function buildBeeHive(){
   const hive = document.getElementById('bee-hive');
   hive.innerHTML='';
   const size = hive.clientWidth || 240;
-  const hexW = size * 0.3;
-  const hexH = hexW * 1.16;
+  const hexW = size * 0.28;
+  const hexH = hexW * (2/Math.sqrt(3));
   const cx = size/2, cy = size/2;
-  const radius = size * 0.34;
-  const fontSize = Math.max(15, hexW * 0.34);
+  const radius = hexW * 1.12;
+  const fontSize = Math.max(15, hexW * 0.32);
 
   const centerHex = document.createElement('button');
   centerHex.className='hex center-hex';
@@ -1164,7 +1268,7 @@ function buildBeeHive(){
   hive.appendChild(centerHex);
 
   beeOuterOrder.forEach((letter, i)=>{
-    const angle = (Math.PI/180) * (60*i - 90);
+    const angle = (Math.PI/180) * (60*i);
     const x = cx + radius*Math.cos(angle) - hexW/2;
     const y = cy + radius*Math.sin(angle) - hexH/2;
     const hex = document.createElement('button');
@@ -1458,7 +1562,7 @@ const LGBTQ_GENDERS = new Set(['Q1052281','Q2449503','Q48270','Q12964198','Q1097
 const peopleState = {
   women: { list:[], gender:'Q6581072', limit:12, mode:'gender' },
   men:   { list:[], gender:'Q6581097', limit:12, mode:'gender' },
-  pride: { list:[], limit:21, mode:'lgbtq' }
+  pride: { list:[], limit:15, mode:'lgbtq' }
 };
 function initPeopleGame(type){
   peopleState[type].list = [];
@@ -1550,6 +1654,114 @@ async function addPerson(type){
   fillPeopleTile(type, newIndex, result.canonicalName);
   updatePeopleCountUI(type);
   if(state.list.length >= state.limit) showToast(`All ${state.limit} named!`);
+}
+
+const PETAL_TRACKS = [
+  "kiss me",
+  "hate that i made you love me",
+  "petal",
+  "stay",
+  "oh well",
+  "big feelings",
+  "freak",
+  "(warning signs)",
+  "like i do",
+  "never get over me",
+  "bad thing (bunny hop)",
+  "nowhere, nobody"
+];
+let petalFound = new Array(PETAL_TRACKS.length).fill(false);
+function normalizePetal(s){
+  return s.trim().toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ').trim();
+}
+function initPetalQuestion(){
+  petalFound = new Array(PETAL_TRACKS.length).fill(false);
+  document.getElementById('petal-input').value='';
+  document.getElementById('petal-next-btn').disabled = true;
+  buildPetalTracklist();
+  updatePetalProgress();
+}
+function buildPetalTracklist(){
+  const wrap = document.getElementById('petal-tracklist');
+  wrap.innerHTML = PETAL_TRACKS.map((track,i)=>{
+    return `<div class="petal-track-row" id="petal-row-${i}">
+      <span class="petal-track-num">${i+1}</span>
+      <i class="fas fa-lock petal-track-icon"></i>
+      <span class="petal-track-title">???????????</span>
+      <span class="petal-track-dur"></span>
+    </div>`;
+  }).join('');
+}
+function revealPetalRow(i){
+  const row = document.getElementById(`petal-row-${i}`);
+  row.classList.add('found');
+  row.querySelector('.petal-track-icon').className = 'fas fa-circle-play petal-track-icon';
+  row.querySelector('.petal-track-title').innerText = PETAL_TRACKS[i];
+  row.querySelector('.petal-track-dur').innerText = '--:--';
+  row.classList.remove('petal-pop');
+  void row.offsetWidth;
+  row.classList.add('petal-pop');
+}
+function updatePetalProgress(){
+  const count = petalFound.filter(Boolean).length;
+  document.getElementById('petal-progress-fill').style.width = `${(count/PETAL_TRACKS.length)*100}%`;
+  document.getElementById('petal-progress-label').innerText = `${count} / ${PETAL_TRACKS.length}`;
+  document.getElementById('petal-next-btn').disabled = count < PETAL_TRACKS.length;
+}
+function addPetalTrack(){
+  const input = document.getElementById('petal-input');
+  const typed = input.value.trim();
+  if(!typed) return;
+  const normTyped = normalizePetal(typed);
+  const idx = PETAL_TRACKS.findIndex(t=>normalizePetal(t)===normTyped);
+  if(idx===-1){ showToast("That's not a track on petal."); return; }
+  if(petalFound[idx]){ showToast("Already found that track."); return; }
+  petalFound[idx] = true;
+  input.value='';
+  revealPetalRow(idx);
+  updatePetalProgress();
+  if(petalFound.every(Boolean)) showToast("Album unlocked!");
+  else showToast("Track added!");
+}
+function submitPetalQuestion(){
+  const allFound = petalFound.every(Boolean);
+  questionResults[11] = allFound;
+  if(allFound) finalScore++;
+  advance(12);
+}
+
+let runawayClicksToWin = 0;
+function initRunawayQuestion(){
+  const zone = document.getElementById('runaway-zone');
+  const btn = document.getElementById('runaway-btn');
+  btn.style.top = 'calc(50% - 24px)';
+  btn.style.left = 'calc(50% - 70px)';
+  zone.removeEventListener('mousemove', runawayMouseMove);
+  zone.addEventListener('mousemove', runawayMouseMove);
+}
+function runawayMouseMove(e){
+  const zone = document.getElementById('runaway-zone');
+  const btn = document.getElementById('runaway-btn');
+  const zoneRect = zone.getBoundingClientRect();
+  const btnRect = btn.getBoundingClientRect();
+  const btnCenterX = btnRect.left + btnRect.width/2 - zoneRect.left;
+  const btnCenterY = btnRect.top + btnRect.height/2 - zoneRect.top;
+  const mouseX = e.clientX - zoneRect.left;
+  const mouseY = e.clientY - zoneRect.top;
+  const dist = Math.hypot(mouseX-btnCenterX, mouseY-btnCenterY);
+  if(dist < 90){
+    const maxLeft = Math.max(0, zoneRect.width - btnRect.width);
+    const maxTop = Math.max(0, zoneRect.height - btnRect.height);
+    const newLeft = Math.random()*maxLeft;
+    const newTop = Math.random()*maxTop;
+    btn.style.left = newLeft + 'px';
+    btn.style.top = newTop + 'px';
+  }
+}
+function handleRunawayClick(){
+  questionResults[12] = true;
+  finalScore++;
+  advance(13);
 }
 
 function buildResults(){
