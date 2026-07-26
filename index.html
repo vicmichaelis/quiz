@@ -319,6 +319,43 @@ button{font-family:var(--font);}
 }
 .runaway-btn:focus-visible{outline:3px solid var(--accent); outline-offset:2px;}
 
+.gif-rank-wrapper{display:flex; gap:18px; flex-wrap:wrap; margin-bottom:14px;}
+.gif-pool{
+  flex:1; min-width:220px; display:flex; flex-wrap:wrap; gap:10px; align-content:flex-start;
+  border:1.5px dashed var(--border); border-radius:12px; padding:12px; min-height:160px;
+  transition:background .2s ease, border-color .2s ease;
+}
+.gif-pool-label{width:100%; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--text-muted); margin-bottom:2px;}
+.gif-pool.drag-over{border-color:var(--accent); background:var(--accent-soft);}
+.gif-slots{flex:1; min-width:220px; display:flex; flex-direction:column; gap:8px;}
+.gif-slot{
+  border:1.5px dashed var(--border); border-radius:10px; padding:8px; min-height:64px;
+  display:flex; align-items:center; gap:10px; transition:background .2s ease, border-color .2s ease; position:relative;
+}
+.gif-slot.drag-over{border-color:var(--accent); background:var(--accent-soft);}
+.gif-slot-label{font-size:.68rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.03em; width:76px; flex-shrink:0; line-height:1.3;}
+.gif-slot-label span{display:block; font-weight:500; text-transform:none; color:var(--text-muted); font-size:.62rem;}
+.gif-slot-empty{font-size:.75rem; color:var(--text-muted); font-style:italic;}
+.gif-tile{
+  width:96px; background:var(--surface); border:1.5px solid var(--border); border-radius:10px; padding:6px;
+  cursor:grab; touch-action:none; user-select:none; display:flex; flex-direction:column; gap:4px; align-items:center;
+  transition:box-shadow .15s ease; flex-shrink:0;
+}
+.gif-tile:active{cursor:grabbing;}
+.gif-tile:hover{box-shadow:0 4px 10px rgba(0,0,0,.08);}
+.gif-tile.dragging-source{opacity:.35;}
+.gif-tile.placed{width:100%; flex-direction:row; align-items:center; text-align:left;}
+.gif-tile.placed .gif-tile-media{width:56px; height:56px; flex-shrink:0;}
+.gif-tile-media{width:100%; height:64px; border-radius:6px; overflow:hidden; background:var(--bg); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.gif-tile-media iframe{width:100%; height:100%; border:none; pointer-events:none;}
+.gif-fallback-link{display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--text-muted); font-size:.65rem; text-decoration:none; pointer-events:none;}
+.gif-fallback-link i{font-size:1.2rem;}
+.gif-tile-count{font-size:.68rem; font-weight:700; color:var(--accent); text-align:center;}
+.gif-ghost{
+  position:fixed; z-index:2000; pointer-events:none; opacity:.92; transform:scale(1.05) rotate(-2deg);
+  box-shadow:0 12px 28px rgba(0,0,0,.28); border-radius:10px;
+}
+
 #certificate{background:var(--surface); padding:32px; text-align:center; border-radius:12px; border:1px solid var(--border); position:relative; margin-bottom:14px;}
 #certificate h1{font-size:1.7rem;}
 #certificate h2{color:var(--accent); font-size:1.5rem; margin:12px 0; border-bottom:2px solid var(--text); display:inline-block; padding-bottom:4px;}
@@ -330,6 +367,7 @@ button{font-family:var(--font);}
 .cert-breakdown-item.correct i{color:var(--w-correct);}
 .cert-breakdown-item.incorrect i{color:var(--danger);}
 .cert-breakdown-item.unknown i{color:var(--text-muted);}
+.cert-breakdown-item.partial i{color:var(--w-present);}
 .cert-stamp{position:absolute; bottom:18px; right:18px; color:var(--accent); font-size:2.6rem; opacity:.85;}
 
 #toast{
@@ -604,6 +642,7 @@ button{font-family:var(--font);}
       <button onclick="addPerson('women')" id="women-add-btn">Add</button>
     </div>
     <div class="people-grid" id="women-grid"></div>
+    <button class="btn-secondary" onclick="endPeopleEarly('women',8,9)" style="margin-bottom:8px;">End question early (keep current score)</button>
     <button class="btn-primary" id="women-next-btn" disabled onclick="submitPeopleQuestion('women',8,9)">Next Question <i class="fas fa-arrow-right"></i></button>
   </div>
 
@@ -616,18 +655,20 @@ button{font-family:var(--font);}
       <button onclick="addPerson('men')" id="men-add-btn">Add</button>
     </div>
     <div class="people-grid" id="men-grid"></div>
+    <button class="btn-secondary" onclick="endPeopleEarly('men',9,10)" style="margin-bottom:8px;">End question early (keep current score)</button>
     <button class="btn-primary" id="men-next-btn" disabled onclick="submitPeopleQuestion('men',9,10)">Next Question <i class="fas fa-arrow-right"></i></button>
   </div>
 
   <div id="screen-10" class="screen">
     <h2>Pride Month is Every Month! <button class="help-btn" onclick="showPeopleHelp()">?</button></h2>
-    <p class="subtitle">Name 15 LGBTQ+ people.</p>
-    <div class="people-count"><span id="pride-count">0</span> / 15</div>
+    <p class="subtitle">Name 12 LGBTQ+ people.</p>
+    <div class="people-count"><span id="pride-count">0</span> / 12</div>
     <div class="people-input-row">
       <input type="text" id="pride-input" placeholder="Type a name..." onkeydown="if(event.key==='Enter')addPerson('pride')">
       <button onclick="addPerson('pride')" id="pride-add-btn">Add</button>
     </div>
     <div class="people-grid" id="pride-grid"></div>
+    <button class="btn-secondary" onclick="endPeopleEarly('pride',10,11)" style="margin-bottom:8px;">End question early (keep current score)</button>
     <button class="btn-primary" id="pride-next-btn" disabled onclick="submitPeopleQuestion('pride',10,11)">Next Question <i class="fas fa-arrow-right"></i></button>
   </div>
 
@@ -668,6 +709,16 @@ button{font-family:var(--font);}
   </div>
 
   <div id="screen-13" class="screen">
+    <h2>Rank Sky's GIFs <button class="help-btn" onclick="showGifHelp()">?</button></h2>
+    <p class="subtitle">Drag each GIF into the ranking slots, from most used (top) to least used (bottom).</p>
+    <div class="gif-rank-wrapper">
+      <div class="gif-pool" id="gif-pool"><span class="gif-pool-label">Unranked GIFs</span></div>
+      <div class="gif-slots" id="gif-slots"></div>
+    </div>
+    <button class="btn-primary" id="gif-submit-btn" disabled onclick="submitGifRanking()">Finish Quiz <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="screen-14" class="screen">
     <div id="certificate">
       <h1>Lemon's Quiz Certificate</h1>
       <p style="color:var(--text-muted); font-size:.95rem; margin-top:8px;">This certifies that</p>
@@ -686,11 +737,11 @@ button{font-family:var(--font);}
 <script>
 let playerName = "";
 let finalScore = 0;
-const TOTAL_QUESTIONS = 12;
+const TOTAL_QUESTIONS = 13;
 let currentScreen = 0;
 const CORRECT_MONTH = 7, CORRECT_DAY = 26;
 const ADMIN_PASSWORD = "vicmichaelisisthebest";
-const QUESTION_SCREEN_MAP = {1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,11:11,12:12};
+const QUESTION_SCREEN_MAP = {1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,11:11,12:12,13:13};
 const QUESTION_TITLES = {
   1:"Today's the day!",
   2:"It's Basically a 50/50...",
@@ -703,10 +754,13 @@ const QUESTION_TITLES = {
   9:"It's Only Fair For This Question.",
   10:"Pride Month is Every Month!",
   11:"Pre-save Petal",
-  12:"Next Question"
+  12:"Next Question",
+  13:"Rank Sky's GIFs"
 };
+const QUESTION_MAX_POINTS = {1:1,2:1,3:1,4:1,5:1,6:1,7:1,8:12,9:12,10:12,11:1,12:1,13:7};
+const TOTAL_POSSIBLE_POINTS = Object.values(QUESTION_MAX_POINTS).reduce((a,b)=>a+b,0);
 function freshQuestionResults(){
-  return {1:null,2:null,3:null,4:null,5:null,6:null,7:null,8:null,9:null,10:null,11:null,12:null};
+  return {1:null,2:null,3:null,4:null,5:null,6:null,7:null,8:null,9:null,10:null,11:null,12:null,13:null};
 }
 let questionResults = freshQuestionResults();
 
@@ -736,7 +790,7 @@ function updateProgressHud(){
   if(currentScreen>=1 && currentScreen<=TOTAL_QUESTIONS){
     hud.classList.remove('hidden');
     document.getElementById('progress-pill').innerText = `Q${currentScreen} / ${TOTAL_QUESTIONS}`;
-  } else if(currentScreen===13){
+  } else if(currentScreen===14){
     hud.classList.remove('hidden');
     document.getElementById('progress-pill').innerText = `Done!`;
   } else {
@@ -784,7 +838,8 @@ function advance(nextScreenId){
   if(nextScreenId===10) initPeopleGame('pride');
   if(nextScreenId===11) initPetalQuestion();
   if(nextScreenId===12) initRunawayQuestion();
-  if(nextScreenId===13){ stopStopwatch(); buildResults(); }
+  if(nextScreenId===13) initGifRanking();
+  if(nextScreenId===14){ stopStopwatch(); buildResults(); }
 }
 
 function checkInputValidity(inputEl, btnId){
@@ -816,10 +871,10 @@ function closeUtilMenuAnd(fn){
 }
 
 function skipQuestion(){
-  if(currentScreen===0 || currentScreen===13) return showToast("Nothing to skip here.");
+  if(currentScreen===0 || currentScreen===14) return showToast("Nothing to skip here.");
   showConfirm("Skip this question?", "It will be counted as incorrect.", ()=>{
     questionResults[currentScreen] = false;
-    const nextMap = {1:2,2:3,3:4,4:5,5:6,6:7,7:8,8:9,9:10,10:11,11:12,12:13};
+    const nextMap = {1:2,2:3,3:4,4:5,5:6,6:7,7:8,8:9,9:10,10:11,11:12,12:13,13:14};
     const next = nextMap[currentScreen];
     if(next) advance(next);
   });
@@ -876,6 +931,11 @@ function resetAllQuizState(){
   document.getElementById('petal-progress-label').innerText=`0 / ${PETAL_TRACKS.length}`;
   document.getElementById('petal-next-btn').disabled = true;
   runawayClicksToWin = 0;
+  gifPoolOrder = GIF_ITEMS.map(g=>g.id);
+  gifSlotArr = new Array(GIF_ITEMS.length).fill(null);
+  document.getElementById('gif-pool').innerHTML = '<span class="gif-pool-label">Unranked GIFs</span>';
+  document.getElementById('gif-slots').innerHTML='';
+  document.getElementById('gif-submit-btn').disabled = true;
 }
 
 function openAdminPrompt(){
@@ -918,9 +978,11 @@ function buildAdminAnswers(){
     </div>
     <div class="admin-answer"><strong>Q7 Country (current target):</strong> ${currentTarget}, randomized each playthrough</div>
     <div class="admin-answer"><strong>Q8 / Q9 Name people:</strong> Open-ended, verified live against Wikipedia/Wikidata (must be a real, distinct person of the requested gender with a Wikipedia article).</div>
-    <div class="admin-answer"><strong>Q10 Prove You Support Pride:</strong> Open-ended, verified against Wikidata (must have a documented LGBTQ+ related sexual orientation or gender identity claim, 15 required).</div>
+    <div class="admin-answer"><strong>Q10 Prove You Support Pride:</strong> Open-ended, verified against Wikidata (must have a documented LGBTQ+ related sexual orientation or gender identity claim, 12 required). Each name named counts as 1 point.</div>
     <div class="admin-answer"><strong>Q11 Pre-save Petal:</strong> All 12 tracks: kiss me, hate that i made you love me, petal, stay, oh well, big feelings, freak, warning signs (interlude), like i do, never get over me, bad thing (bunny hop), nowhere, nobody.</div>
     <div class="admin-answer"><strong>Q12 Next Question:</strong> The button only flees from mouse movement, it never reacts to keyboard focus. Press Tab until the button is focused, then hit Enter or Space to activate it.</div>
+    <div class="admin-answer"><strong>Q13 Rank Sky's GIFs:</strong> Most used to least used: Ultrasad (107), Oop (22), Cat Happy (20), Popcorn Guy (13), Dexter Stare (10), Happy Birthday Dog (7), Peeta Mellark (2). Each correctly placed slot is worth 1 point (7 total). Send counts are no longer shown on the tiles themselves during play, only used here and to compute scoring.</div>
+    <div class="admin-answer"><strong>Scoring note:</strong> Q8/Q9/Q10/Q13 are each worth more than 1 point, 1 point per correctly named person or correctly ranked GIF. Q8/Q9/Q10 can be ended early to lock in a partial score.</div>
   `;
   document.getElementById('admin-answers-content').innerHTML = html + `<button class="modal-close" onclick="closeModal('admin-answers-modal')">Close</button>`;
 }
@@ -974,6 +1036,16 @@ function showRunawayHelp(){
     <ul>
       <li>There is more than one way to complete this.</li>
       <li>One of the ways does not involve using your mouse at all.</li>
+    </ul>`);
+}
+function showGifHelp(){
+  showHelp(`<h3>How to Rank the GIFs</h3>
+    <p>Drag each GIF tile from the pool into a ranking slot.</p>
+    <ul>
+      <li>Order the GIFs from most used (top, Rank #1) to least used (bottom, Rank #7).</li>
+      <li>Drag a tile onto an occupied slot to swap it with the tile already there.</li>
+      <li>Drag a tile back into the pool area to remove it from the ranking.</li>
+      <li>All 7 slots must be filled before you can finish the quiz.</li>
     </ul>`);
 }
 function showPeopleHelp(){
@@ -1308,7 +1380,7 @@ function beeTypeLetter(letter){
 }
 function beeDelete(){
   if(beePassed || beeChecking) return;
-  beeCurrentWord = beeCurrentWord.slice(0,-1);
+  beeCurrentWord = '';
   renderBeeCurrent();
 }
 function beeShuffle(){
@@ -1562,7 +1634,7 @@ const LGBTQ_GENDERS = new Set(['Q1052281','Q2449503','Q48270','Q12964198','Q1097
 const peopleState = {
   women: { list:[], gender:'Q6581072', limit:12, mode:'gender' },
   men:   { list:[], gender:'Q6581097', limit:12, mode:'gender' },
-  pride: { list:[], limit:15, mode:'lgbtq' }
+  pride: { list:[], limit:12, mode:'lgbtq' }
 };
 function initPeopleGame(type){
   peopleState[type].list = [];
@@ -1630,8 +1702,18 @@ async function validatePerson(typedName, state){
   }
 }
 function submitPeopleQuestion(type, questionNum, nextScreen){
-  questionResults[questionNum] = true;
+  const state = peopleState[type];
+  questionResults[questionNum] = {correct: state.list.length, total: state.limit};
+  finalScore += state.list.length;
   advance(nextScreen);
+}
+function endPeopleEarly(type, questionNum, nextScreen){
+  const state = peopleState[type];
+  showConfirm(
+    "End this question early?",
+    `You'll lock in your current score of ${state.list.length} out of ${state.limit} for this question.`,
+    ()=>{ submitPeopleQuestion(type, questionNum, nextScreen); }
+  );
 }
 async function addPerson(type){
   const input = document.getElementById(`${type}-input`);
@@ -1670,6 +1752,7 @@ const PETAL_TRACKS = [
   "bad thing (bunny hop)",
   "nowhere, nobody"
 ];
+const PETAL_DURATIONS = ["3:39","3:17","3:04","2:28","3:16","2:53","3:19","1:17","2:47","3:48","3:28","2:52"];
 let petalFound = new Array(PETAL_TRACKS.length).fill(false);
 function normalizePetal(s){
   return s.trim().toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ').trim();
@@ -1688,7 +1771,7 @@ function buildPetalTracklist(){
       <span class="petal-track-num">${i+1}</span>
       <i class="fas fa-lock petal-track-icon"></i>
       <span class="petal-track-title">???????????</span>
-      <span class="petal-track-dur"></span>
+      <span class="petal-track-dur">--:--</span>
     </div>`;
   }).join('');
 }
@@ -1697,7 +1780,7 @@ function revealPetalRow(i){
   row.classList.add('found');
   row.querySelector('.petal-track-icon').className = 'fas fa-circle-play petal-track-icon';
   row.querySelector('.petal-track-title').innerText = PETAL_TRACKS[i];
-  row.querySelector('.petal-track-dur').innerText = '--:--';
+  row.querySelector('.petal-track-dur').innerText = PETAL_DURATIONS[i];
   row.classList.remove('petal-pop');
   void row.offsetWidth;
   row.classList.add('petal-pop');
@@ -1764,19 +1847,196 @@ function handleRunawayClick(){
   advance(13);
 }
 
+const GIF_ITEMS = [
+  {id:'klipy_ultrasad', label:'Ultrasad', url:'https://tenor.com/view/ultrasad-gif-23310565', count:107, tenorId:'23310565'},
+  {id:'oop', label:'Oop', url:'https://tenor.com/view/oop-gif-20488124', count:22, tenorId:'20488124'},
+  {id:'cat_happy', label:'Cat Happy', url:'https://tenor.com/view/cat-hyppy-gif-9091438043443803258', count:20, tenorId:'9091438043443803258'},
+  {id:'dexter', label:'Dexter Stare', url:'https://tenor.com/view/dexter-james-doakes-erik-king-stare-staring-gif-1343162792415382650', count:10, tenorId:'1343162792415382650'},
+  {id:'popcorn', label:'Popcorn Guy', url:'https://tenor.com/view/popcorn-guy-relaxing-popcorm-popcorn-gif-26404903', count:13, tenorId:'26404903'},
+  {id:'bday_dog', label:'Happy Birthday Dog', url:'https://tenor.com/view/happy-birthday-ashleigh-smiling-dog-happy-gif-13607269', count:7, tenorId:'13607269'},
+  {id:'peeta', label:'Peeta Mellark', url:'https://tenor.com/view/peeta-mellark-peeta-mellark-hijacked-peeta-hunger-games-peeta-mellark-tweaking-gif-12967012349267846118', count:2, tenorId:'12967012349267846118'}
+];
+const GIF_CORRECT_ORDER = ['klipy_ultrasad','oop','cat_happy','popcorn','dexter','bday_dog','peeta'];
+let gifPoolOrder = GIF_ITEMS.map(g=>g.id);
+let gifSlotArr = new Array(GIF_ITEMS.length).fill(null);
+let gifDrag = null;
+
+function gifItemById(id){ return GIF_ITEMS.find(g=>g.id===id); }
+
+function initGifRanking(){
+  gifPoolOrder = GIF_ITEMS.map(g=>g.id);
+  gifSlotArr = new Array(GIF_ITEMS.length).fill(null);
+  renderGifPool();
+  renderGifSlots();
+}
+
+function gifTileInnerHTML(item){
+  let media;
+  if(item.tenorId){
+    media = `<iframe src="https://tenor.com/embed/${item.tenorId}" loading="lazy" title="${item.label} gif"></iframe>`;
+  } else {
+    media = `<span class="gif-fallback-link"><i class="fas fa-image"></i><span>${item.label}</span></span>`;
+  }
+  return `<div class="gif-tile-media">${media}</div>`;
+}
+
+function renderGifPool(){
+  const pool = document.getElementById('gif-pool');
+  pool.innerHTML = '<span class="gif-pool-label">Unranked GIFs</span>';
+  gifPoolOrder.forEach(id=>{
+    const item = gifItemById(id);
+    const tile = document.createElement('div');
+    tile.className='gif-tile'; tile.id=`gif-tile-${id}`; tile.dataset.id=id;
+    tile.innerHTML = gifTileInnerHTML(item);
+    attachGifDrag(tile);
+    pool.appendChild(tile);
+  });
+}
+function renderGifSlots(){
+  const wrap = document.getElementById('gif-slots');
+  wrap.innerHTML='';
+  gifSlotArr.forEach((id,i)=>{
+    const slot=document.createElement('div');
+    slot.className='gif-slot'; slot.dataset.slotIndex=i;
+    const labelText = i===0 ? 'Most used' : (i===gifSlotArr.length-1 ? 'Least used' : '');
+    let inner = `<div class="gif-slot-label">Rank #${i+1}${labelText?` <span>(${labelText})</span>`:''}</div>`;
+    if(id){
+      const item = gifItemById(id);
+      inner += `<div class="gif-tile placed" id="gif-tile-${id}" data-id="${id}">${gifTileInnerHTML(item)}</div>`;
+    } else {
+      inner += `<div class="gif-slot-empty">Drop GIF here</div>`;
+    }
+    slot.innerHTML = inner;
+    wrap.appendChild(slot);
+  });
+  gifSlotArr.forEach(id=>{
+    if(id){
+      const tile = document.getElementById(`gif-tile-${id}`);
+      if(tile) attachGifDrag(tile);
+    }
+  });
+  updateGifSubmitBtn();
+}
+function updateGifSubmitBtn(){
+  const filled = gifSlotArr.every(x=>x!==null);
+  document.getElementById('gif-submit-btn').disabled = !filled;
+}
+function attachGifDrag(tile){
+  tile.addEventListener('pointerdown', gifPointerDown);
+}
+function gifPointerDown(e){
+  if(e.button !== undefined && e.button !== 0) return;
+  const tile = e.currentTarget;
+  const id = tile.dataset.id;
+  const rect = tile.getBoundingClientRect();
+  const ghost = tile.cloneNode(true);
+  ghost.classList.add('gif-ghost');
+  ghost.style.width = rect.width+'px';
+  ghost.style.height = rect.height+'px';
+  ghost.style.left = rect.left+'px';
+  ghost.style.top = rect.top+'px';
+  document.body.appendChild(ghost);
+  tile.classList.add('dragging-source');
+  const parentSlot = tile.closest('.gif-slot');
+  gifDrag = {
+    id, ghost,
+    offsetX: e.clientX - rect.left,
+    offsetY: e.clientY - rect.top,
+    fromSlot: parentSlot ? parseInt(parentSlot.dataset.slotIndex) : null
+  };
+  document.addEventListener('pointermove', gifPointerMove);
+  document.addEventListener('pointerup', gifPointerUp);
+  e.preventDefault();
+}
+function gifPointerMove(e){
+  if(!gifDrag) return;
+  gifDrag.ghost.style.left = (e.clientX - gifDrag.offsetX)+'px';
+  gifDrag.ghost.style.top = (e.clientY - gifDrag.offsetY)+'px';
+  document.querySelectorAll('.gif-slot.drag-over, .gif-pool.drag-over').forEach(s=>s.classList.remove('drag-over'));
+  gifDrag.ghost.style.display='none';
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  gifDrag.ghost.style.display='';
+  if(el){
+    const slot = el.closest('.gif-slot');
+    const pool = el.closest('.gif-pool');
+    if(slot) slot.classList.add('drag-over');
+    else if(pool) pool.classList.add('drag-over');
+  }
+}
+function gifPointerUp(e){
+  if(!gifDrag) return;
+  document.removeEventListener('pointermove', gifPointerMove);
+  document.removeEventListener('pointerup', gifPointerUp);
+  gifDrag.ghost.style.display='none';
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  gifDrag.ghost.style.display='';
+  document.querySelectorAll('.gif-slot.drag-over, .gif-pool.drag-over').forEach(s=>s.classList.remove('drag-over'));
+  const targetSlotEl = el ? el.closest('.gif-slot') : null;
+  const targetPoolEl = el ? el.closest('.gif-pool') : null;
+  placeGifItem(
+    gifDrag.id,
+    gifDrag.fromSlot,
+    targetSlotEl ? parseInt(targetSlotEl.dataset.slotIndex) : null,
+    !!targetPoolEl
+  );
+  gifDrag.ghost.remove();
+  document.querySelectorAll('.dragging-source').forEach(t=>t.classList.remove('dragging-source'));
+  gifDrag = null;
+}
+function placeGifItem(id, fromSlot, toSlot, toPool){
+  if(fromSlot !== null){ gifSlotArr[fromSlot] = null; }
+  else { gifPoolOrder = gifPoolOrder.filter(x=>x!==id); }
+
+  if(toSlot !== null && toSlot !== undefined){
+    const displaced = gifSlotArr[toSlot];
+    gifSlotArr[toSlot] = id;
+    if(displaced){
+      if(fromSlot !== null){ gifSlotArr[fromSlot] = displaced; }
+      else { gifPoolOrder.push(displaced); }
+    }
+  } else if(toPool){
+    if(!gifPoolOrder.includes(id)) gifPoolOrder.push(id);
+  } else {
+    if(fromSlot !== null) gifSlotArr[fromSlot] = id;
+    else if(!gifPoolOrder.includes(id)) gifPoolOrder.push(id);
+  }
+  renderGifPool();
+  renderGifSlots();
+}
+function submitGifRanking(){
+  let correctCount = 0;
+  gifSlotArr.forEach((id,i)=>{ if(id === GIF_CORRECT_ORDER[i]) correctCount++; });
+  questionResults[13] = {correct: correctCount, total: GIF_ITEMS.length};
+  finalScore += correctCount;
+  advance(14);
+}
+
 function buildResults(){
   document.getElementById('cert-name').innerText = playerName;
-  document.getElementById('cert-score').innerText = `${finalScore}/${TOTAL_QUESTIONS}`;
+  document.getElementById('cert-score').innerText = `${finalScore}/${TOTAL_POSSIBLE_POINTS}`;
   document.getElementById('cert-time').innerText = `Time: ${formatTime(stopwatchElapsedMs)}`;
   const breakdown = document.getElementById('cert-breakdown');
   breakdown.innerHTML = '';
   for(let n=1;n<=TOTAL_QUESTIONS;n++){
     const result = questionResults[n];
-    const cls = result===true ? 'correct' : (result===false ? 'incorrect' : 'unknown');
-    const icon = result===true ? 'fa-circle-check' : (result===false ? 'fa-circle-xmark' : 'fa-circle-question');
+    const maxPts = QUESTION_MAX_POINTS[n];
+    let cls, icon, label;
+    if(maxPts > 1){
+      let correct = 0;
+      if(result && typeof result === 'object') correct = result.correct;
+      else if(result === true) correct = maxPts;
+      else correct = 0;
+      cls = correct===maxPts ? 'correct' : (correct===0 ? 'incorrect' : 'partial');
+      icon = correct===maxPts ? 'fa-circle-check' : (correct===0 ? 'fa-circle-xmark' : 'fa-circle-minus');
+      label = `Q${n}: ${QUESTION_TITLES[n]} &mdash; ${correct}/${maxPts}`;
+    } else {
+      cls = result===true ? 'correct' : (result===false ? 'incorrect' : 'unknown');
+      icon = result===true ? 'fa-circle-check' : (result===false ? 'fa-circle-xmark' : 'fa-circle-question');
+      label = `Q${n}: ${QUESTION_TITLES[n]}`;
+    }
     const row = document.createElement('div');
     row.className = `cert-breakdown-item ${cls}`;
-    row.innerHTML = `<i class="fas ${icon}"></i><span>Q${n}: ${QUESTION_TITLES[n]}</span>`;
+    row.innerHTML = `<i class="fas ${icon}"></i><span>${label}</span>`;
     breakdown.appendChild(row);
   }
 }
